@@ -1,0 +1,19 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# Data outputs — PDFs are large, keep out of git
+data/pdfs/
+data/raw_html/
+
+# Scratch and drafts — uncommitted exploration
+notes/
+scratch/
+*.draft.md
+
+# OS artefacts
+.DS_Store
+Thumbs.db

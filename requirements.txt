@@ -1,0 +1,17 @@
+# French Parliamentary Corpus — Python dependencies
+# Install: pip install -r requirements.txt
+
+requests==2.33.1
+lxml==5.3.1
+pydantic==2.13.4
+csv  # standard library, listed for clarity
+pathlib  # standard library
+
+# PDF processing (download validation + future extraction)
+pdfplumber==0.11.9  # used in /extract/
+
+# Testing
+pytest==9.1.0
+
+# Optional: for progress bars during downloads
+tqdm==4.68.2
