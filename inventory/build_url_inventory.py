@@ -313,7 +313,7 @@ def build_inventory() -> None:
         writer.writeheader()
         writer.writerows(rows)
 
-    print(f"\n✅ Done. {len(rows)} URLs written to {OUTPUT_CSV}")
+    print(f"\nDone. {len(rows)} URLs written to {OUTPUT_CSV}")
 
 
 def load_inventory() -> list[dict]:
