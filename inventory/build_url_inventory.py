@@ -27,9 +27,11 @@ for the full trial-and-error narrative):
     - The .asp-to-.pdf derivation (XII–XIV) was discovered when probing
       /{leg}/cri/{session} returned a 403 for direct directory listing, but
       the .asp index pages were readable and filenames were 8-digit date codes.
-    - The dyn/ system (XV–XVII) was found via the modern comptes-rendus interface
-      which paginates results. The "page" parameter was discovered through
-      inspecting the site's JavaScript-driven navigation.
+    -The dyn/ system (XV–XVII) was found via the modern comptes-rendus interface
+which paginates results. The "page" and "limit" parameters were discovered
+as plain HTML anchor tags (`<a href="?page=N">`) in the rendered index
+page — the AN site renders pagination links directly in the server-side
+HTML, not via JavaScript.
 
 Sénat URL inventory is NOT yet implemented — see the stub at the bottom of this
 file and the Sénat TODO in STATUS.md.

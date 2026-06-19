@@ -110,9 +110,15 @@ Shubhanjay Varma. *French Parliamentary Corpus 2000–2025*. University of Manch
 
 ## Data sources
 
-| Source | Coverage | Licence |
-|--------|----------|---------|
-| data.assemblee-nationale.fr | AN 14th–17th legislature (2012–2026) | Etalab Open Licence 2.0 |
-| archives.assemblee-nationale.fr | AN 11th–13th legislature (1997–2012) | Etalab Open Licence 2.0 |
-| data.senat.fr (TODO) | Sénat (pending URL discovery) | Etalab Open Licence 2.0 |
-| www.senat.fr (TODO) | Sénat (pending URL discovery) | Etalab Open Licence 2.0 |
+| URL pattern | Coverage | Licence |
+|-------------|----------|---------|
+| `archives.assemblee-nationale.fr/11/cri/{session}/{nnn}.pdf` | Legislature XI only (1997–2002) | Etalab Open Licence 2.0 (confirmed at [data.assemblee-nationale.fr/licence-ouverte-open-licence](https://data.assemblee-nationale.fr/licence-ouverte-open-licence)) |
+| `www.assemblee-nationale.fr/{leg}/pdf/cri/{session}/{date}.pdf` | Legislatures XII–XIV (2002–2017) | Etalab Open Licence 2.0 |
+| `www.assemblee-nationale.fr/dyn/{leg}/comptes-rendus/` | Legislatures XV–XVII (2017–2026) | Etalab Open Licence 2.0 |
+| Sénat (TODO — URL pattern pending) | Sénat (pending URL discovery) | Pending verification |
+
+**Licence reference:** The Etalab Open Licence 2.0 (Licence Ouverte 2.0) is stated on the
+Assemblée nationale's data portal at [data.assemblee-nationale.fr/licence-ouverte-open-licence](https://data.assemblee-nationale.fr/licence-ouverte-open-licence),
+and applies to the official open data published by the Assemblée nationale.
+The archives subdomain content falls under the same licence as it is published
+by the same institution. Sénat licence is pending verification.
