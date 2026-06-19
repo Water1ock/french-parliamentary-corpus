@@ -244,10 +244,16 @@ def discover_legislatures_dyn() -> None:
                 if not pdfs:
                     break
                 for pdf in pdfs:
+                    url_full = BASE + pdf
+                    m = re.search(r'/dyn/(\d+)/', pdf)
+                    actual_leg = int(m.group(1)) if m else leg
+                    if actual_leg != leg:
+                        print(f"  NOTE: URL legislature ({actual_leg}) differs from index "
+                              f"page legislature ({leg}) — using URL value. {url_full}")
                     rows.append({
-                        "legislature": leg,
+                        "legislature": actual_leg,
                         "session": re.search(r'session-[^/]+', pdf).group(0),
-                        "url": BASE + pdf
+                        "url": url_full
                     })
                 total += len(pdfs)
                 # Find the max page number among pagination links

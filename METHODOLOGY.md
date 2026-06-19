@@ -189,6 +189,26 @@ hand-maintained list silently drifting out of sync.
 
 ---
 
+## Legislature XVI cross-listed PDF on Legislature XVII index (2026-06-19)
+
+During manual verification of the dyn/ inventory, one cross-listed PDF was
+found: the `/dyn/17/comptes-rendus/seance` index page (Legislature XVII,
+2024–2026) includes a PDF whose URL is `/dyn/16/comptes-rendus/seance/...`
+(a Legislature XVI session, 2022–2024). This is likely due to the legislature
+transition after the July 2024 snap election — a session from the closing days
+of Legislature XVI was listed on the following legislature's index page.
+
+**Fix:** The `discover_legislatures_dyn()` function originally set the
+`legislature` field from the outer loop variable (the index page being
+scraped), meaning this PDF was incorrectly labeled legislature=17 when the
+URL clearly showed legislature=16. The function now derives the legislature
+number from the PDF URL itself via regex (`/dyn/(\d+)/`). If the URL's
+legislature number differs from the loop variable, a warning is logged and
+the URL's value is used. This ensures the inventory is authoritative even
+when index pages list cross-legislature content.
+
+---
+
 ## Remaining unknowns
 
 ### Sénat (French Senate)
