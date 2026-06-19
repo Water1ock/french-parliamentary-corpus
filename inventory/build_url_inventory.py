@@ -8,7 +8,10 @@ Assemblée nationale has used over time:
 
     LEGISLATURE  XI (archives subdomain, sequentially-numbered PDFs)
         Pattern: https://archives.assemblee-nationale.fr/{leg}/cri/{session}/{nnn}.pdf
-        Discovery: scrape the session .html page, extract all numbered PDF links.
+        Discovery: session slugs are discovered dynamically from the index page
+        (archives.assemblee-nationale.fr/11/cri/index.html), NOT hardcoded — this
+        prevents silent gaps like the one corrected 2026-06-19 when 2 of 8 real
+        sessions were missing from the original hardcoded list.
 
     LEGISLATURES XII–XIV (www subdomain, .asp session indices → date-derived PDFs)
         Pattern: https://www.assemblee-nationale.fr/{leg}/pdf/cri/{session}/{YYYYMMDD}.pdf
@@ -70,21 +73,41 @@ rows: list[dict] = []  # Each dict: {legislature, session, url}
 #   https://archives.assemblee-nationale.fr/11/cri/{session-slug}.html
 # The HTML table lists links to numbered PDFs like "001.pdf", "002.pdf", etc.
 #
-# Session slugs for XI (manually verified against archives.assemblee-nationale.fr/11/cri/):
-XI_SESSIONS = [
-    "11-1997-1998-ordinaire1",
-    "11-1997-1998-extraordinaire1",
-    "11-1998-1999-ordinaire1",
-    "11-1999-2000-ordinaire1",
-    "11-2000-2001-ordinaire1",
-    "11-2001-2002-ordinaire1",
-]
+# Session slugs are discovered DYNAMICALLY from the index page
+# (archives.assemblee-nationale.fr/11/cri/index.html).  Previously a hardcoded
+# list was used, but live verification on 2026-06-19 found it was missing 2 of
+# 8 real sessions (11-1996-1997-ordinaire1 and 11-1996-1997-extraordinaire1).
+# Dynamic discovery eliminates this silent-drift risk.
 
 
 def discover_legislature_11() -> None:
-    """Scrape Legislature XI session pages for PDF links."""
+    """
+    Discover Legislature XI session pages and their PDF links.
+
+    Session slugs are discovered dynamically from the index page rather than
+    hardcoded, after an initial hardcoded list was found to be missing 2 of 8
+    real sessions (11-1996-1997-ordinaire1 and 11-1996-1997-extraordinaire1) —
+    see METHODOLOGY.md for this correction.
+    """
     print("=== Legislature 11 ===")
-    for sess in XI_SESSIONS:
+    index_url = f"{ARCHIVES}/11/cri/index.html"
+    try:
+        r = requests.get(index_url, verify=False, timeout=15, headers=HEADERS)
+        if r.status_code != 200:
+            print(f"  SKIP {r.status_code} {index_url}")
+            return
+        tree = html.fromstring(r.content)
+        index_links = tree.xpath("//a/@href")
+        sessions = sorted(
+            l.replace(".html", "") for l in index_links
+            if l.startswith("11-") and l.endswith(".html")
+        )
+        print(f"  Discovered {len(sessions)} session slugs from index page")
+    except Exception as e:
+        print(f"  ERR index page {index_url}: {e}")
+        return
+
+    for sess in sessions:
         url = f"{ARCHIVES}/11/cri/{sess}.html"
         try:
             r = requests.get(url, verify=False, timeout=15, headers=HEADERS)
