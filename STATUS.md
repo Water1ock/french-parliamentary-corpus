@@ -5,7 +5,8 @@
 ### Assemblée nationale URL discovery
 
 - [x] **Legislature XI** (1997–2002) — archives subdomain, numbered PDFs
-  - ✅ 6 sessions mapped (5 ordinaire + 1 extraordinaire)
+  - ✅ 8 sessions mapped (6 ordinaire + 2 extraordinaire) — dynamically discovered
+    from index page (corrected 2026-06-19; 2 sessions were missing from hardcoded list)
   - ✅ URL pattern verified: `archives.assemblee-nationale.fr/11/cri/{session}/{nnn}.pdf`
   - ✅ Test: `tests/test_an_legislature_11_pdf_discovery.py`
   - Evidence: 265 PDFs per full session, verified as valid `application/pdf`
@@ -21,7 +22,13 @@
   - ✅ URL pattern verified: `www.assemblee-nationale.fr/dyn/{leg}/comptes-rendus/seance/session-{...}.pdf`
   - ✅ Test: `tests/test_an_legislature_15_17_dyn_pagination.py`
 
-- [x] **Total verified: 7,845 PDF URLs** confirmed returning `application/pdf` content (verified in the old repo; the discovery pattern is reproduced here but the inventory CSV must be rebuilt)
+- [x] **Total: 7,845+ PDF URLs** confirmed returning `application/pdf` content (verified in the old repo; the discovery pattern is reproduced here but the inventory CSV must be rebuilt; the XI correction adds ~530 PDFs from the 2 newly-discovered sessions)
+
+- [x] **Congrès (joint AN+Sénat) sessions identified — deferred, not excluded**
+  - Found during XIV session discovery: `/14/cri/congres/20154001.asp`
+  - Deferred for sequencing reasons (rare, ~handful across 1997–2025); requires
+    schema extension (`chamber` value `'congres'`) and dedicated discovery pass
+  - Tracked as a planned future addition, NOT ruled out
 
 ### Pipeline infrastructure
 

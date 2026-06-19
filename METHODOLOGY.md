@@ -160,6 +160,35 @@ low MBs. Values like 1,024 bytes indicated HTML error pages, not real PDFs.
 
 ---
 
+## Congrès (joint sessions) — deferred, not excluded
+
+Congrès (joint AN+Sénat) sessions are identified but NOT YET INCLUDED in this
+release. One example was found during XIV session discovery
+(`/14/cri/congres/20154001.asp`). This is a sequencing decision, not a
+permanent scope exclusion: Congrès sessions are rare (a handful across
+1997–2025, typically constitutional votes or presidential addresses) and would
+require a small schema extension (a third `chamber` value, e.g. `'congres'`)
+plus a dedicated discovery pass across all legislatures. This is deferred until
+core AN and Sénat plenary coverage is complete, and is tracked as a planned
+future addition, not ruled out.
+
+---
+
+## Legislature XI session-list correction (2026-06-19)
+
+An initial hardcoded list of XI session slugs (`XI_SESSIONS` in
+`build_url_inventory.py`) contained only 6 entries. Live verification against
+`archives.assemblee-nationale.fr/11/cri/index.html` on 2026-06-19 returned 8
+session slugs, revealing two were missing:
+- `11-1996-1997-ordinaire1`
+- `11-1996-1997-extraordinaire1`
+
+The hardcoded list was replaced with dynamic discovery — scraping the index
+page itself to get the real session list. This eliminates the risk of a
+hand-maintained list silently drifting out of sync.
+
+---
+
 ## Remaining unknowns
 
 ### Sénat (French Senate)
