@@ -1,0 +1,9 @@
+License TBD — decision pending.
+
+Likely:
+  - CC-BY-4.0 for the dataset (debate texts, metadata, compiled tables)
+  - MIT for the code (scripts, pipeline, tests)
+
+The final license will be chosen once the dataset scope is clearer.
+Please confirm with the author (Shubhanjay Varma, @Water1ock) before
+reusing this work under any specific license terms.

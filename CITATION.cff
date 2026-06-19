@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+title: "French Parliamentary Corpus 2000–2025"
+message: >-
+  If you use this dataset in published research, please cite it using
+  the metadata below.
+type: dataset
+authors:
+  - given-names: Shubhanjay
+    family-names: Varma
+    affiliation: "University of Manchester (PhD Researcher, Law)"
+    email: varmashubhanjay@gmail.com
+    orcid: "https://orcid.org/0000-0000-0000-0000"
+date-released: 2026
+repository-code: "https://github.com/Water1ock/french-parliamentary-corpus"
+license: "CC-BY-4.0"
+keywords:
+  - "French parliamentary debates"
+  - "Assemblée nationale"
+  - "Sénat"
+  - "computational social science"
+  - "natural language processing"
+  - "political science"
