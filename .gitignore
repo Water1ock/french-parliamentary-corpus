@@ -17,3 +17,6 @@ scratch/
 # OS artefacts
 .DS_Store
 Thumbs.db
+
+# Private agent working context — never commit
+AGENT_CONTEXT.md
