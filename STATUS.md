@@ -21,7 +21,7 @@
   - ✅ URL pattern verified: `www.assemblee-nationale.fr/dyn/{leg}/comptes-rendus/seance/session-{...}.pdf`
   - ✅ Test: `tests/test_an_legislature_15_17_dyn_pagination.py`
 
-- [x] **Total verified: 7,845 PDF URLs** confirmed returning `application/pdf` content
+- [x] **Total verified: 7,845 PDF URLs** confirmed returning `application/pdf` content (verified in the old repo; the discovery pattern is reproduced here but the inventory CSV must be rebuilt)
 
 ### Pipeline infrastructure
 
@@ -123,7 +123,7 @@ The Sénat site uses a different structure than the AN. Preliminary exploration
 
 | Metric | Value |
 |--------|-------|
-| AN PDF URLs discovered | 7,845 |
+| AN PDF URLs (pattern verified on old repo) | 7,845 |
 | AN legislatures covered | XI–XVII (1997–2026) |
 | AN sessions mapped | 52 |
 | Sénat coverage | 🔴 PENDING |

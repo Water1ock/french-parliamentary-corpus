@@ -14,14 +14,14 @@ Why this test exists:
 
 What this test does:
     - Loads data/pdf_inventory.csv
-    - For each URL, sends a HEAD request (or partial GET) to check
-      Content-Type and status without downloading the full PDF
+    - For each URL, performs a full GET and checks the first 4 bytes
+      for the %PDF magic number
     - Reports counts of valid vs invalid URLs per legislature
 
 Note:
     This test sends 7,000+ requests and takes a while. Run with:
         python -m pytest tests/test_pdf_url_validity.py -v
-    Or as a spot-check (first 50 URLs):
+    Or as a spot-check (first 10 URLs per legislature):
         python tests/test_pdf_url_validity.py --spot-check
 """
 

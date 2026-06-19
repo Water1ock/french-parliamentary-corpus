@@ -4,9 +4,6 @@
 requests==2.33.1
 lxml==5.3.1
 pydantic==2.13.4
-csv  # standard library, listed for clarity
-pathlib  # standard library
-
 # PDF processing (download validation + future extraction)
 pdfplumber==0.11.9  # used in /extract/
 

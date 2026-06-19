@@ -18,9 +18,13 @@ If --step is provided, only that step and subsequent steps are run.
 """
 
 import argparse
+import os
 import subprocess
 import sys
 from pathlib import Path
+
+# Ensure CWD is the repo root (where this script lives)
+os.chdir(Path(__file__).resolve().parent.parent)
 
 
 def run_step(name: str, script: str) -> None:
