@@ -73,7 +73,7 @@ def main():
 
     # Write errors
     with open(ERRORS, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["legislature", "session", "url", "status", "reason"])
+        writer = csv.DictWriter(f, fieldnames=["legislature", "session", "url", "date", "status", "reason"])
         writer.writeheader()
         writer.writerows(errors)
 
