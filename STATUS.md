@@ -59,7 +59,7 @@
 
 ## STUB (TODO — clear path forward)
 
-### Sénat URL discovery (`inventory/build_url_inventory.py:discover_senat_urls`)
+### Sénat URL discovery (`inventory/build_senat_url_inventory.py`)
 
 - [x] **Sénat URL patterns MAPPED** (2026-06-20) — test file created
   - ✅ Modern session page pattern: `/seances/s{YYYYMM}/s{YYYYMMDD}/st{YYYYMMDD}000.html`
@@ -68,13 +68,11 @@
   - ✅ `data.senat.fr` bulk data accessible (debats.zip: 33.5 MB, cri.zip: 542 MB)
   - ✅ `debats.sql` schema confirmed: `debats` table has `datsea`, `deburl`, `numero`, `estcongres`
   - ✅ Test file: `tests/test_senat_pdf_discovery.py`
-- [ ] **Blocked on:** 2000–2002 gap (pre-data.senat.fr, post-archives)
-  - 1996–2002 Sénat debates exist only as Journal Officiel scans via Gallica (BNF)
-  - Monthly indexes for 2000-2002 return 403
-- [ ] **Next step:** Decide whether to (a) parse data.senat.fr `debats.sql` for 2003+ URLs
-      or (b) scrape session pages via the discovered URL pattern
-- [ ] **Implementation decision:** Separate `inventory/build_senat_url_inventory.py`
-      vs integrated into `build_url_inventory.py` — both viable
+- [x] **Sénat URL inventory BUILT** (2026-06-20)
+  - ✅ `inventory/build_senat_url_inventory.py` parses data.senat.fr debats.sql
+  - ✅ Output: `data/senat_inventory.csv` — 2,764 sessions (2003–2025)
+  - ✅ Era split: 586 HTML session pages (2003–2007) + 2,178 PDF URLs (2008–2025)
+  - ✅ Excludes: 1 pre-2003 outlier, 50 post-cutoff (2026), 1 Congrès session
 
 ### PDF text extraction (`extract/extract_text.py`)
 

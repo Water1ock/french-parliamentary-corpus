@@ -8,6 +8,7 @@ __pycache__/
 # Data outputs — PDFs are large, keep out of git
 data/pdfs/
 data/raw_html/
+data/debats.zip
 
 # Scratch and drafts — uncommitted exploration
 notes/
