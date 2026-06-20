@@ -61,14 +61,20 @@
 
 ### Sénat URL discovery (`inventory/build_url_inventory.py:discover_senat_urls`)
 
-- [ ] **Blocked on:** Sénat site structure mapping
-- [ ] **Known so far:**
-  - Monthly index pattern: `/seances/s{YYYYMM}/`
-  - Indexes ≥2003 return 200; indexes <2003 return 403
-  - Session link patterns differ by era (s{YYYYMMDD} vs sc{YYYYMMDD})
-  - PDF URL derivation not yet determined
-- [ ] **Next step:** Read accessible monthly index, inspect session page HTML,
-      determine PDF URL pattern
+- [x] **Sénat URL patterns MAPPED** (2026-06-20) — test file created
+  - ✅ Modern session page pattern: `/seances/s{YYYYMM}/s{YYYYMMDD}/st{YYYYMMDD}000.html`
+  - ✅ Modern PDF URL pattern: `/seances/s{YYYYMM}/s{YYYYMMDD}/s{YYYYMMDD}.pdf`
+  - ✅ PDFs validated for 2008, 2009, 2010, 2020, 2022, 2023 — all return `%PDF`
+  - ✅ `data.senat.fr` bulk data accessible (debats.zip: 33.5 MB, cri.zip: 542 MB)
+  - ✅ `debats.sql` schema confirmed: `debats` table has `datsea`, `deburl`, `numero`, `estcongres`
+  - ✅ Test file: `tests/test_senat_pdf_discovery.py`
+- [ ] **Blocked on:** 2000–2002 gap (pre-data.senat.fr, post-archives)
+  - 1996–2002 Sénat debates exist only as Journal Officiel scans via Gallica (BNF)
+  - Monthly indexes for 2000-2002 return 403
+- [ ] **Next step:** Decide whether to (a) parse data.senat.fr `debats.sql` for 2003+ URLs
+      or (b) scrape session pages via the discovered URL pattern
+- [ ] **Implementation decision:** Separate `inventory/build_senat_url_inventory.py`
+      vs integrated into `build_url_inventory.py` — both viable
 
 ### PDF text extraction (`extract/extract_text.py`)
 
