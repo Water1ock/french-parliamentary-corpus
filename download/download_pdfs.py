@@ -35,10 +35,49 @@ HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; FrenchParliamentaryCorpus/1.0
 PDF_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def download_all() -> None:
+def _make_filename(row: dict) -> str:
+    """Build a collision-safe filename: {legislature}_{session}_{url_basename}.
+
+    Including the session prevents collisions when different sessions use the
+    same sequential numbering (e.g. Legislature 11).
+    """
+    leg = row["legislature"]
+    session = row["session"]
+    basename = Path(row["url"]).name
+    # Sanitise: replace any path separators that snuck through
+    session_clean = session.replace("/", "-").replace("\\", "-")
+    return f"{leg}_{session_clean}_{basename}"
+
+
+def _cleanup_old_style_files(inventory_rows: list[dict]) -> int:
+    """Remove old collision-prone Leg 11 files.
+
+    Legislature 11 uses sequential numbering (001.pdf, 002.pdf, ...) in
+    every session, so the old naming scheme {leg}_{basename}.pdf caused
+    ~902 collisions across 8 sessions.  We remove the old files so the
+    new scheme {leg}_{session}_{basename}.pdf can replace them.
+
+    Legs 12-17 are left alone — their date-based or descriptive basenames
+    never collided, and their old-style files are retained (the download
+    loop's fallback check skips them).
+
+    Returns the number of files removed.
+    """
+    removed = 0
+    for row in inventory_rows:
+        if row['legislature'] != '11':
+            continue
+        old_path = PDF_DIR / f"{row['legislature']}_{Path(row['url']).name}"
+        if old_path.exists():
+            old_path.unlink()
+            removed += 1
+    return removed
+
+
+def download_all(cleanup_old: bool = True) -> None:
     """Download all PDFs not already on disk, logging errors."""
     if not INVENTORY.exists():
-        print(f"❌ Inventory not found at {INVENTORY}. Run inventory/build_url_inventory.py first.")
+        print(f"Inventory not found at {INVENTORY}. Run inventory/build_url_inventory.py first.")
         return
 
     with open(INVENTORY, encoding="utf-8") as f:
@@ -46,11 +85,18 @@ def download_all() -> None:
 
     print(f"Total PDFs in inventory: {len(rows)}")
 
-    # Count already-downloaded
-    done = sum(
-        1 for r in rows
-        if Path(PDF_DIR, f"{r['legislature']}_{Path(r['url']).name}").exists()
-    )
+    if cleanup_old:
+        old_count = _cleanup_old_style_files(rows)
+        if old_count > 0:
+            print(f"Cleaned up {old_count} old-style collision files (Leg 11).")
+
+    # Count already-downloaded: check new name first, fall back to old name
+    done = 0
+    for r in rows:
+        new_path = PDF_DIR / _make_filename(r)
+        old_path = PDF_DIR / f"{r['legislature']}_{Path(r['url']).name}"
+        if new_path.exists() or old_path.exists():
+            done += 1
     print(f"Already downloaded: {done}")
     print(f"Remaining: {len(rows) - done}\n")
 
@@ -58,19 +104,19 @@ def download_all() -> None:
     downloaded = 0
 
     for i, row in enumerate(rows):
-        leg = row["legislature"]
-        url = row["url"]
-        filename = f"{leg}_{Path(url).name}"
-        filepath = PDF_DIR / filename
+        new_path = PDF_DIR / _make_filename(row)
+        old_path = PDF_DIR / f"{row['legislature']}_{Path(row['url']).name}"
 
-        if filepath.exists():
+        # Skip if already downloaded under either naming scheme
+        if new_path.exists() or old_path.exists():
             continue
 
+        url = row["url"]
         try:
             r = requests.get(url, headers=HEADERS, verify=False, timeout=30)
 
             if r.status_code == 200 and r.content[:4] == b"%PDF":
-                filepath.write_bytes(r.content)
+                new_path.write_bytes(r.content)
                 downloaded += 1
                 if downloaded % 50 == 0:
                     print(f"  [{i+1}/{len(rows)}] Downloaded {downloaded} new PDFs...")

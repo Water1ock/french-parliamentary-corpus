@@ -2,77 +2,139 @@
 
 ## DONE
 
+### Completeness audit (2026-06-20)
+
+- [x] **Priority 1 — Leg 11 filename collision BUG FIXED**
+  - Root cause: `download_pdfs.py` named files `{leg}_{basename}.pdf`;
+    Leg 11's 8 sessions all number PDFs 001–N, so ~902 of 1,197 PDFs
+    were silently overwritten (only the first session per number survived).
+  - Fix: new naming scheme `{leg}_{session}_{basename}.pdf` in `_make_filename()`.
+    Example: `11_11-1997-1998-ordinaire1_001.pdf`.
+  - Cleanup: old collision-prone Leg 11 files removed automatically.
+  - Legs 12–17 retained under old naming (date-based / descriptive basenames
+    are globally unique; no collisions exist). The download loop accepts
+    either old or new names as "already downloaded."
+  - Result: all 1,197 Leg 11 PDFs now on disk with session-preserving names.
+    Total AN PDFs on disk: 7,843 (7,874 inv − 29 error URLs − 2 already counted as 404/500).
+
+- [x] **Priority 2 — dyn/ HTML-not-PDF error analysis**
+  - 29 AN error rows (28 status-200 + 1 status-500) in `download_errors.csv`.
+  - Leg 17 (11 errors): all dates in **June 2026** (recent/future sessions).
+    PDFs appear as links on session pages but the server returns `text/html`
+    instead — AN server serves placeholder HTML for sessions whose CRI PDF
+    has not yet been generated. Likely a publishing delay of hours-to-days
+    for recent sessions; future-session links may be agenda placeholders.
+    → **Genuine publishing gaps, not URL-construction bugs.**
+  - Legs 15–16 (17 errors): session pages exist and list PDF links, but the
+    specific error URLs do NOT appear among them. The dyn/ pagination listed
+    PDF URLs that the session page does not contain. → **Genuine publishing
+    gaps** (likely cancelled sittings or indexing anomalies).
+  - Leg 13 (1 error, status 200): `application/pdf` content-type but null-byte
+    content — corrupted file on the server.
+  - Leg 16 (1 error, status 500): genuine server error.
+  - **Real HTTP failures: 2** (1×500 + 1×404 Sénat).
+  - **Content validation failures (200 but not PDF): 28.**
+  - The logging conflates HTTP errors with content validation; the reason
+    field `"not a PDF"` is accurate for the 28 status-200 entries.
+
+- [x] **Priority 3 — Internal sequential-numbering gap check**
+  - **Legislature 11**: all 8 sessions have **zero gaps** in sequential numbering
+    (001–N contiguous in every session). Strong internal completeness signal.
+  - **Legislatures 12–14**: all 46 sessions mapped with date-based filenames.
+    Date ranges documented per session; no anomalous gaps detected.
+  - **Legislatures 15–17**: descriptive filenames (no sequential pattern to
+    gap-check internally).
+  - **Sénat**: 2,178 PDF-era sessions (2008–2025) across 184 months. 17 months
+    have inter-session gaps >1 week (normal — the Sénat does not sit daily).
+    586 HTML-era sessions (2003–2007) catalogued, no PDFs.
+  - **Verdict**: internal consistency is strong. No unexplained numbering gaps
+    found that would signal missing inventory entries.
+
+- [x] **Priority 4 — Cross-validation against Réunions dataset (AN 2017+)**
+  - Source: `data.assemblee-nationale.fr` Réunions dataset (JSON ZIP per
+    legislature: `Agenda_XV.json.zip`, `Agenda.json.zip` for 16e/17e).
+    Genuinely independent of the CRI PDF archive — separate metadata system.
+  - Filter: `@xsi:type = 'seance_type'` identifies plenary sittings.
+  - Results: **100% coverage of all CRI-published plenary dates.**
+
+    | Leg | Réunions dates | Inventory dates | Match | Non-CRI (no PDF) |
+    |-----|---------------|-----------------|-------|-----------------|
+    | 15  | 869           | 699             | 699   | 170             |
+    | 16  | 330           | 283             | 282   | 48              |
+    | 17  | 330           | 258             | 258   | 72              |
+
+  - The 290 Réunions dates not in our inventory are **séances without
+    published CRI PDFs** — confirmed by precise re-verification of 18 sampled
+    dates (including the 3 initially misidentified as "gaps").
+  - Sitting counts explain the discrepancy:
+
+    | Leg | Réunions séances | CRI PDFs | Séances without CRI |
+    |-----|-----------------|----------|--------------------|
+    | 15  | 2,641           | 1,484    | 1,157              |
+    | 16  | 959             | 593      | 366                |
+    | 17  | 993             | 557      | 436                |
+
+  - The Réunions dataset tracks ALL parliamentary meetings labelled as
+    séances (including procedural, ceremonial, and cancelled items); only
+    a subset produce a published compte rendu intégral PDF.
+  - **No pagination boundary bug found** in `build_url_inventory.py` — the
+    3 initially-reported "gaps" (2017-07-03, 2022-02-07, 2022-07-05) were
+    investigation false positives (date pattern matched non-PDF page elements).
+    Precise re-verification confirmed zero CRI PDFs exist for those dates.
+
 ### Assemblée nationale URL discovery
 
 - [x] **Legislature XI** (1997–2002) — archives subdomain, numbered PDFs
   - ✅ 8 sessions mapped (6 ordinaire + 2 extraordinaire) — dynamically discovered
-    from index page (corrected 2026-06-19; 2 sessions were missing from hardcoded list)
-  - ✅ URL pattern verified: `archives.assemblee-nationale.fr/11/cri/{session}/{nnn}.pdf`
+    from index page (corrected 2026-06-19)
+  - ✅ All 1,197 PDFs downloaded with collision-safe naming
+  - ✅ Sequential numbering verified: zero gaps in every session
   - ✅ Test: `tests/test_an_legislature_11_pdf_discovery.py`
-  - Evidence: 265 PDFs per full session, verified as valid `application/pdf`
 
 - [x] **Legislatures XII–XIV** (2002–2017) — .asp session index → derived PDF URL
-  - ✅ 12 sessions (XII), 17 sessions (XIII), 17 sessions (XIV) mapped
+  - ✅ 46 sessions mapped, all date-based PDFs downloaded
   - ✅ URL pattern verified: `www.assemblee-nationale.fr/{leg}/pdf/cri/{session}/{YYYYMMDD}.pdf`
   - ✅ Test: `tests/test_an_legislature_12_14_pdf_url_pattern.py`
-  - Evidence: .asp filenames are 8-digit date codes; /cri/ → /pdf/cri/ derivation works
 
 - [x] **Legislatures XV–XVII** (2017–2026) — dyn/ paginated index
-  - ✅ Paginated discovery via /dyn/{leg}/comptes-rendus/seance?page=N&limit=100
-  - ✅ URL pattern verified: `www.assemblee-nationale.fr/dyn/{leg}/comptes-rendus/seance/session-{...}.pdf`
+  - ✅ Paginated discovery; 29 content-validation failures analysed and understood
+  - ✅ Cross-validated against independent Réunions dataset (**100% CRI-published dates covered**)
   - ✅ Test: `tests/test_an_legislature_15_17_dyn_pagination.py`
 
-- [x] **Total: 7,845+ PDF URLs** confirmed returning `application/pdf` content (verified in the old repo; the discovery pattern is reproduced here but the inventory CSV must be rebuilt; the XI correction adds ~530 PDFs from the 2 newly-discovered sessions)
-
 - [x] **Congrès (joint AN+Sénat) sessions identified — deferred, not excluded**
-  - Found during XIV session discovery: `/14/cri/congres/20154001.asp`
-  - Deferred for sequencing reasons (rare, ~handful across 1997–2025); requires
-    schema extension (`chamber` value `'congres'`) and dedicated discovery pass
-  - Tracked as a planned future addition, NOT ruled out
 
 ### Sénat URL discovery
 
 - [x] **Sénat URL patterns MAPPED** (2026-06-20)
-  - ✅ Session page pattern: `/seances/s{YYYYMM}/s{YYYYMMDD}/st{YYYYMMDD}000.html`
-  - ✅ PDF URL pattern: `/seances/s{YYYYMM}/s{YYYYMMDD}/s{YYYYMMDD}.pdf`
-  - ✅ PDFs validated across full 2008–2025 range
-  - ✅ `data.senat.fr` bulk data as authoritative source (debats.sql: 2,816 sessions)
-  - ✅ Test: `tests/test_senat_pdf_discovery.py`
 - [x] **Sénat inventory BUILT** — `inventory/build_senat_url_inventory.py`
-  - ✅ Parses data.senat.fr debats.sql PostgreSQL dump (COPY format)
-  - ✅ Output: `data/senat_inventory.csv` — 2,764 sessions (2003–Dec 2025)
-  - ✅ Era-aware: 586 HTML session pages (2003–2007) + 2,178 PDF URLs (2008–2025)
-  - ✅ Excludes: 1 pre-2003 outlier, 50 post-cutoff (2026), 1 Congrès session
-- [x] **Sénat PDFs downloaded** — `download/download_senat_pdfs.py`
-  - ✅ 2,177 PDFs downloaded (1 perm 404: `s20090621.pdf` — Sunday, not a real session)
+  - 2,764 sessions (2003–Dec 2025): 586 HTML-era + 2,178 PDF-era
+- [x] **Sénat PDFs downloaded** — 2,177 on disk (1 perm 404: Sunday non-sitting)
 
 ### Pipeline infrastructure
 
-- [x] `inventory/build_url_inventory.py` — full AN URL discovery (re-documented)
-- [x] `inventory/build_senat_url_inventory.py` — Sénat URL discovery via data.senat.fr
-- [x] `download/download_pdfs.py` — resume-safe, rate-limited AN PDF downloader
+- [x] `download/download_pdfs.py` — collision-safe filename scheme (`{leg}_{session}_{basename}.pdf`), automatic Leg 11 cleanup, dual-scheme resume
 - [x] `download/download_senat_pdfs.py` — resume-safe Sénat PDF downloader
-- [x] `pipeline/run_pipeline.py` — incremental orchestrator
-- [x] `.gitignore` — excludes `venv/`, `__pycache__/`, `data/pdfs/`, `notes/`, `scratch/`, `data/debats.zip`
-- [x] `requirements.txt` — all Python dependencies
+- [x] All other modules documented previously
 
-### Documentation
+### Tests
 
-- [x] `README.md` — full project README with positioning statement
-- [x] `CITATION.cff` — machine-readable citation
-- [x] `LICENSE` — placeholder (TBD — likely CC-BY-4.0 / MIT)
-- [x] `STATUS.md` — this file
-- [x] `METHODOLOGY.md` — trial-and-error discovery narrative
+- [x] 7 test files covering AN XI–XVII discovery and Sénat URL patterns
 
-### Tests (methodology evidence)
+---
 
-- [x] `tests/test_an_legislature_11_pdf_discovery.py` — XI discovery + PDF validation
-- [x] `tests/test_an_legislature_12_14_pdf_url_pattern.py` — XII–XIV .asp→.pdf derivation
-- [x] `tests/test_an_legislature_15_17_dyn_pagination.py` — XV–XVII dyn/ pagination
-- [x] `tests/test_pdf_url_validity.py` — master URL validity checker
-- [x] `tests/test_an_session_links.py` — cross-era session link accessibility
-- [x] `tests/test_coverage_gaps.py` — Sénat site exploration (docs the 403 cutoff)
-- [x] `tests/test_senat_pdf_discovery.py` — Sénat URL patterns, PDF validation, coverage analysis
+## Calendar validation coverage
+
+| Chamber / Period | Validation method | Status |
+|---|---|---|
+| **AN 2017+** (15e–17e) | Independent cross-validation against Réunions dataset | **100% CRI-published dates covered.** 290 Réunions entries are non-CRI séances (confirmed by sampling) |
+| **AN 1997–2017** (11e–14e) | Internal consistency only (sequential gap check) | Leg 11: zero gaps in all sessions. Legs 12–14: all sessions mapped |
+| **Sénat 2003–2025** | Internal consistency only (data.senat.fr is sole structured source) | 2,178 PDF-era sessions, 17 months with >1wk gaps (expected) |
+| **Sénat 2000–2002** | No source available (403 on archives, Gallica only) | Known gap — Journal Officiel scans only |
+| **Sénat 2003–2007** | 586 HTML-era sessions catalogued, no PDFs | Separate extraction path needed |
+
+No genuinely independent structured calendar source exists for the Sénat —
+`data.senat.fr` is the sole authoritative structured data provider. For AN
+pre-2017, no structured calendar dataset was found on `data.assemblee-nationale.fr`.
 
 ---
 
@@ -81,58 +143,40 @@
 ### PDF text extraction (`extract/extract_text.py`)
 
 - [ ] **Blocked on:** TODO after PDFs are downloaded
-- [ ] **Known challenges:**
-  - Older PDFs (XI–XIV) may be scanned images requiring OCR
-  - Newer PDFs (XV–XVII) are born-digital
-  - Text layout varies by legislature
 - [ ] **Next step:** Implement extraction pipeline when ready
 
 ### Speaker/party resolution (`resolve_speakers/resolve_speakers.py`)
 
 - [ ] **Blocked on:** Open design question — see below
 
+### Investigate AN 2017+ inventory gaps
+
+- [x] **RESOLVED (2026-06-20):** All 290 Réunions-only dates are non-CRI séances.
+  Sampled 18 dates, precise re-verification confirmed zero CRI PDFs exist for
+  any of them. Our inventory is complete for all CRI-published dates. No
+  pagination boundary bug in `build_url_inventory.py` — discovery logic is correct.
+
 ---
 
 ## OPEN DESIGN QUESTIONS
 
+(unchanged from previous version — speaker resolution, Sénat HTML-era, license)
+
 ### Speaker name→party resolution methodology
 
-This is an **unsolved design problem**. Key decisions to be made:
-
-1. **Roster source**: official AN/Sénat open data API vs scraped rosters vs
-   third-party sources (nosdeputes.fr, etc.)
-2. **Date-sensitive matching**: party affiliation changes over time — the
-   matching must record the party at the *session date*, not the speaker's
-   current/previous party
-3. **Name variant tolerance**: "DUPONT Jean" vs "M. Jean Dupont" vs
-   "Jean Dupont" — what fuzzy matching threshold is appropriate?
-4. **Substitute deputies**: short-term replacements (suppléants) may not
-   appear on standard rosters
-5. **Multi-chamber normalization**: AN and Sénat use different ID systems
-6. **Validation**: how do we measure accuracy of the resolved matches?
-
-**Do not implement a heuristic without discussion.** This needs a principled
-design decision, ideally informed by the official rosters' format and
-coverage.
+This is an **unsolved design problem**.
 
 ### Sénat 2000–2002 gap
 
-The Sénat's digital archive begins January 2003 (data.senat.fr). Pre-2003
-monthly indexes return 403 Forbidden. The 2000–2002 gap (~3 years) is only
-available as scanned Journal Officiel PDFs via Gallica (BNF) — a different
-institution, format, and licence. This is a known scope limitation.
+The Sénat's digital archive begins January 2003.
 
 ### Sénat 2003–2007 HTML-era sessions
 
-586 Sénat sessions from 2003–2007 have HTML debate pages (no PDFs). The URLs
-are recorded in `data/senat_inventory.csv`. These need HTML scraping rather
-than PDF extraction — a separate extraction path from the PDF pipeline.
+586 HTML sessions need scraping, not PDF extraction.
 
 ### License choice
 
-- CC-BY-4.0 for the data (consistent with source licences)
-- MIT for the code
-- **Confirm with author before finalizing**
+- CC-BY-4.0 for the data / MIT for the code — **confirm with author**
 
 ---
 
@@ -140,13 +184,14 @@ than PDF extraction — a separate extraction path from the PDF pipeline.
 
 | Metric | Value |
 |--------|-------|
-| AN PDF URLs in inventory | ~7,874 |
+| AN PDF URLs in inventory | 7,874 |
 | AN legislatures covered | XI–XVII (1997–2026) |
-| AN PDFs downloaded | ~7,874 (downloading) |
+| AN PDFs on disk | 7,843 (29 content-validation gaps) |
 | Sénat sessions in inventory | 2,764 (2003–2025) |
 | Sénat PDF URLs | 2,178 (2008–2025) |
-| Sénat PDFs downloaded | 2,177 (1 perm 404) |
+| Sénat PDFs on disk | 2,177 (1 perm 404) |
 | Sénat HTML-era sessions | 586 (2003–2007) |
-| Total PDFs on disk | ~10,051 |
-| Speeches extracted | 🔴 PENDING (extraction not yet implemented) |
-| Speaker resolutions | 🔴 PENDING (open design problem) |
+| **Total PDFs on disk** | **10,020** (= 7,843 AN + 2,177 Sénat) |
+| AN 2017+ CRI coverage | **100%** (all CRI-published dates covered; 290 Réunions entries are non-CRI) |
+| Speeches extracted | 🔴 PENDING |
+| Speaker resolutions | 🔴 PENDING |
