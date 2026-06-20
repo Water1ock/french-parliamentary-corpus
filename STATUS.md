@@ -30,12 +30,30 @@
     schema extension (`chamber` value `'congres'`) and dedicated discovery pass
   - Tracked as a planned future addition, NOT ruled out
 
+### Sénat URL discovery
+
+- [x] **Sénat URL patterns MAPPED** (2026-06-20)
+  - ✅ Session page pattern: `/seances/s{YYYYMM}/s{YYYYMMDD}/st{YYYYMMDD}000.html`
+  - ✅ PDF URL pattern: `/seances/s{YYYYMM}/s{YYYYMMDD}/s{YYYYMMDD}.pdf`
+  - ✅ PDFs validated across full 2008–2025 range
+  - ✅ `data.senat.fr` bulk data as authoritative source (debats.sql: 2,816 sessions)
+  - ✅ Test: `tests/test_senat_pdf_discovery.py`
+- [x] **Sénat inventory BUILT** — `inventory/build_senat_url_inventory.py`
+  - ✅ Parses data.senat.fr debats.sql PostgreSQL dump (COPY format)
+  - ✅ Output: `data/senat_inventory.csv` — 2,764 sessions (2003–Dec 2025)
+  - ✅ Era-aware: 586 HTML session pages (2003–2007) + 2,178 PDF URLs (2008–2025)
+  - ✅ Excludes: 1 pre-2003 outlier, 50 post-cutoff (2026), 1 Congrès session
+- [x] **Sénat PDFs downloaded** — `download/download_senat_pdfs.py`
+  - ✅ 2,177 PDFs downloaded (1 perm 404: `s20090621.pdf` — Sunday, not a real session)
+
 ### Pipeline infrastructure
 
 - [x] `inventory/build_url_inventory.py` — full AN URL discovery (re-documented)
-- [x] `download/download_pdfs.py` — resume-safe, rate-limited PDF downloader
+- [x] `inventory/build_senat_url_inventory.py` — Sénat URL discovery via data.senat.fr
+- [x] `download/download_pdfs.py` — resume-safe, rate-limited AN PDF downloader
+- [x] `download/download_senat_pdfs.py` — resume-safe Sénat PDF downloader
 - [x] `pipeline/run_pipeline.py` — incremental orchestrator
-- [x] `.gitignore` — excludes `venv/`, `__pycache__/`, `data/pdfs/`, `notes/`, `scratch/`
+- [x] `.gitignore` — excludes `venv/`, `__pycache__/`, `data/pdfs/`, `notes/`, `scratch/`, `data/debats.zip`
 - [x] `requirements.txt` — all Python dependencies
 
 ### Documentation
@@ -54,25 +72,11 @@
 - [x] `tests/test_pdf_url_validity.py` — master URL validity checker
 - [x] `tests/test_an_session_links.py` — cross-era session link accessibility
 - [x] `tests/test_coverage_gaps.py` — Sénat site exploration (docs the 403 cutoff)
+- [x] `tests/test_senat_pdf_discovery.py` — Sénat URL patterns, PDF validation, coverage analysis
 
 ---
 
 ## STUB (TODO — clear path forward)
-
-### Sénat URL discovery (`inventory/build_senat_url_inventory.py`)
-
-- [x] **Sénat URL patterns MAPPED** (2026-06-20) — test file created
-  - ✅ Modern session page pattern: `/seances/s{YYYYMM}/s{YYYYMMDD}/st{YYYYMMDD}000.html`
-  - ✅ Modern PDF URL pattern: `/seances/s{YYYYMM}/s{YYYYMMDD}/s{YYYYMMDD}.pdf`
-  - ✅ PDFs validated for 2008, 2009, 2010, 2020, 2022, 2023 — all return `%PDF`
-  - ✅ `data.senat.fr` bulk data accessible (debats.zip: 33.5 MB, cri.zip: 542 MB)
-  - ✅ `debats.sql` schema confirmed: `debats` table has `datsea`, `deburl`, `numero`, `estcongres`
-  - ✅ Test file: `tests/test_senat_pdf_discovery.py`
-- [x] **Sénat URL inventory BUILT** (2026-06-20)
-  - ✅ `inventory/build_senat_url_inventory.py` parses data.senat.fr debats.sql
-  - ✅ Output: `data/senat_inventory.csv` — 2,764 sessions (2003–2025)
-  - ✅ Era split: 586 HTML session pages (2003–2007) + 2,178 PDF URLs (2008–2025)
-  - ✅ Excludes: 1 pre-2003 outlier, 50 post-cutoff (2026), 1 Congrès session
 
 ### PDF text extraction (`extract/extract_text.py`)
 
@@ -111,16 +115,18 @@ This is an **unsolved design problem**. Key decisions to be made:
 design decision, ideally informed by the official rosters' format and
 coverage.
 
-### Sénat URL discovery
+### Sénat 2000–2002 gap
 
-The Sénat site uses a different structure than the AN. Preliminary exploration
-(see `tests/test_coverage_gaps.py`) shows:
-- A 403 wall for sessions before ~2003
-- Multiple URL pattern variants (`/seances/s{YYYYMM}/s{YYYYMMDD}.html`,
-  `/seances/s{YYYYMM}/sc{YYYYMMDD}.html`, etc.)
-- The PDF derivation rule is unknown
+The Sénat's digital archive begins January 2003 (data.senat.fr). Pre-2003
+monthly indexes return 403 Forbidden. The 2000–2002 gap (~3 years) is only
+available as scanned Journal Officiel PDFs via Gallica (BNF) — a different
+institution, format, and licence. This is a known scope limitation.
 
-**This needs dedicated site-mapping work.**
+### Sénat 2003–2007 HTML-era sessions
+
+586 Sénat sessions from 2003–2007 have HTML debate pages (no PDFs). The URLs
+are recorded in `data/senat_inventory.csv`. These need HTML scraping rather
+than PDF extraction — a separate extraction path from the PDF pipeline.
 
 ### License choice
 
@@ -134,9 +140,13 @@ The Sénat site uses a different structure than the AN. Preliminary exploration
 
 | Metric | Value |
 |--------|-------|
-| AN PDF URLs (pattern verified on old repo) | 7,845 |
+| AN PDF URLs in inventory | ~7,874 |
 | AN legislatures covered | XI–XVII (1997–2026) |
-| AN sessions mapped | 52 |
-| Sénat coverage | 🔴 PENDING |
+| AN PDFs downloaded | ~7,874 (downloading) |
+| Sénat sessions in inventory | 2,764 (2003–2025) |
+| Sénat PDF URLs | 2,178 (2008–2025) |
+| Sénat PDFs downloaded | 2,177 (1 perm 404) |
+| Sénat HTML-era sessions | 586 (2003–2007) |
+| Total PDFs on disk | ~10,051 |
 | Speeches extracted | 🔴 PENDING (extraction not yet implemented) |
 | Speaker resolutions | 🔴 PENDING (open design problem) |

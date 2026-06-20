@@ -39,9 +39,11 @@ Only **plenary (full chamber) sessions** are covered. Committee/commission debat
 ```
 french-parliamentary-corpus/
 ├── inventory/           # URL discovery scripts
-│   └── build_url_inventory.py   # AN PDF URL discovery (DONE)
-├── download/            # PDF downloader (resume-safe)
-│   └── download_pdfs.py
+│   ├── build_url_inventory.py        # AN PDF URL discovery (DONE)
+│   └── build_senat_url_inventory.py  # Sénat URL discovery via data.senat.fr (DONE)
+├── download/            # PDF downloaders (resume-safe)
+│   ├── download_pdfs.py              # AN PDF downloader
+│   └── download_senat_pdfs.py        # Sénat PDF downloader
 ├── extract/             # PDF text extraction (TODO — stub)
 │   └── extract_text.py
 ├── resolve_speakers/    # Speaker→party resolution (TODO — open design)
@@ -54,9 +56,11 @@ french-parliamentary-corpus/
 │   ├── test_an_legislature_15_17_dyn_pagination.py
 │   ├── test_pdf_url_validity.py
 │   ├── test_an_session_links.py
-│   └── test_coverage_gaps.py
+│   ├── test_coverage_gaps.py
+│   └── test_senat_pdf_discovery.py
 ├── data/                # Output directory
-│   └── pdf_inventory.csv        # URL inventory (version-controlled)
+│   ├── pdf_inventory.csv             # AN URL inventory (version-controlled)
+│   └── senat_inventory.csv           # Sénat URL inventory (version-controlled)
 ├── README.md
 ├── STATUS.md            # Current status: DONE vs STUB vs OPEN
 ├── METHODOLOGY.md       # How URL patterns were discovered
@@ -74,13 +78,17 @@ python -m venv venv
 source venv/bin/activate    # or: venv\Scripts\activate (Windows)
 pip install -r requirements.txt
 
-# Step 1: Build the URL inventory
+# Step 1: Build the URL inventories
 python inventory/build_url_inventory.py
-# Output: data/pdf_inventory.csv
+# Output: data/pdf_inventory.csv (AN)
+python inventory/build_senat_url_inventory.py
+# Output: data/senat_inventory.csv (Sénat)
 
 # Step 2: Download PDFs
 python download/download_pdfs.py
-# Output: data/pdfs/ (gitignored)
+# Output: data/pdfs/ (AN PDFs, gitignored)
+python download/download_senat_pdfs.py
+# Output: data/pdfs/ (Sénat PDFs, gitignored)
 
 # Or run the full pipeline:
 python pipeline/run_pipeline.py
@@ -115,7 +123,8 @@ Shubhanjay Varma. *French Parliamentary Corpus 2000–2025*. University of Manch
 | `archives.assemblee-nationale.fr/11/cri/{session}/{nnn}.pdf` | Legislature XI only (1997–2002) | Etalab Open Licence 2.0 (confirmed at [data.assemblee-nationale.fr/licence-ouverte-open-licence](https://data.assemblee-nationale.fr/licence-ouverte-open-licence)) |
 | `www.assemblee-nationale.fr/{leg}/pdf/cri/{session}/{date}.pdf` | Legislatures XII–XIV (2002–2017) | Etalab Open Licence 2.0 |
 | `www.assemblee-nationale.fr/dyn/{leg}/comptes-rendus/` | Legislatures XV–XVII (2017–2026) | Etalab Open Licence 2.0 |
-| Sénat (TODO — URL pattern pending) | Sénat (pending URL discovery) | Pending verification |
+| `www.senat.fr/seances/s{YYYYMM}/s{YYYYMMDD}/s{YYYYMMDD}.pdf` | Sénat 2008–2025 (PDF era) | Etalab Open Licence 2.0 (data.senat.fr) |
+| `www.senat.fr/seances/s{YYYYMM}/s{YYYYMMDD}/st{YYYYMMDD}000.html` | Sénat 2003–2007 (HTML era) | Etalab Open Licence 2.0 (data.senat.fr) |
 
 **Licence reference:** The Etalab Open Licence 2.0 (Licence Ouverte 2.0) is stated on the
 Assemblée nationale's data portal at [data.assemblee-nationale.fr/licence-ouverte-open-licence](https://data.assemblee-nationale.fr/licence-ouverte-open-licence),
