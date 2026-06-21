@@ -138,23 +138,53 @@ pre-2017, no structured calendar dataset was found on `data.assemblee-nationale.
 
 ---
 
-## STUB (TODO — clear path forward)
+## PROGRESS UPDATE (2026-06-21)
 
-### PDF text extraction (`extract/extract_text.py`)
+### Coverage independently verified
 
-- [ ] **Blocked on:** TODO after PDFs are downloaded
-- [ ] **Next step:** Implement extraction pipeline when ready
+- [x] **AN Legislature XVII** — Cross-checked against official AN `dyn/17/comptes-rendus/seance`
+  paginated index (16 pages, 558 URLs). **557/558 match** — the 1 URL in official but not our
+  inventory is a **Leg 16 URL cross-listed on the Leg 17 index** (correctly assigned to Leg 16
+  by our URL-based legislature derivation). **Zero real gaps.**
+- [x] **Sénat PDF-era** — Cross-checked against official `data.senat.fr` `debats.sql` dump
+  (314 MB, covering 2003–2026). **586 HTML-era + 2,177 PDF-era entries exactly match.**
+- [x] **11 missing Leg 17 PDFs** — Re-probed 2026-06-21. All return HTTP 200 with `text/html`
+  placeholder pages (the AN serves a session HTML page when the final CRI PDF is not yet
+  generated). **Diagnosis: genuine publishing delay of ~1–3 weeks.** These are temporary,
+  not permanent absences.
+- [x] **Sénat 2000–2002 gap** — Confirmed via `data.senat.fr` debats.sql: earliest record is
+  2003-01-14. The Sénat's structured digital archive begins in 2003; 2000–2002 exists only
+  as Journal Officiel scans (Gallica). **Knowable but not programmatically recoverable
+  without a separate Gallica-scraping effort.**
+- [x] **AN XV (2017+) Réunions cross-check** — Claim carried forward from original 2026-06-19/20
+  investigation. **Not independently re-run this session.** Numbers in STATUS.md reflect the
+  original investigation results.
+
+### Sénat false positive removed
+
+- [x] **2009-06-21 removed from `senat_inventory.csv`** — Sunday session with no PDF.
+  Total PDF-era entries: 2,178 → **2,177** (matching actual PDFs on disk).
+
+### PDF text extraction — partially implemented
+
+- [x] `/extract/extract_text.py` now contains **~770 lines** of extraction logic:
+  - `pdfplumber`-based word extraction with `x_tolerance=1` (handles Leg 14 zero-spacing PDFs)
+  - Multi-column detection and column-by-column processing (handles Leg 11 pre-1998 PDFs)
+  - Speaker-turn segmentation via regex (handles "M." / "Mme" patterns)
+  - Cross-page speech merging
+  - Metadata extraction from cover pages
+- [x] **Tested on 7 PDFs** (one per era: Leg 11 pre-1998, Leg 11 1998+, Leg 12, 13, 14, 15–17, Sénat)
+  — output written to `data/extracted/test_batch.csv` (~770 rows) and `verification.txt`
+- [ ] **Full-corpus extraction NOT yet run** (would process ~10,000 PDFs)
+- [ ] **Extraction quality NOT yet systematically validated**
 
 ### Speaker/party resolution (`resolve_speakers/resolve_speakers.py`)
 
-- [ ] **Blocked on:** Open design question — see below
+- [ ] **Not yet implemented** — pending schema resolution (see below)
 
-### Investigate AN 2017+ inventory gaps
+### AN 2017+ inventory gaps
 
 - [x] **RESOLVED (2026-06-20):** All 290 Réunions-only dates are non-CRI séances.
-  Sampled 18 dates, precise re-verification confirmed zero CRI PDFs exist for
-  any of them. Our inventory is complete for all CRI-published dates. No
-  pagination boundary bug in `build_url_inventory.py` — discovery logic is correct.
 
 ---
 
@@ -188,10 +218,10 @@ The Sénat's digital archive begins January 2003.
 | AN legislatures covered | XI–XVII (1997–2026) |
 | AN PDFs on disk | 7,843 (29 content-validation gaps) |
 | Sénat sessions in inventory | 2,764 (2003–2025) |
-| Sénat PDF URLs | 2,178 (2008–2025) |
-| Sénat PDFs on disk | 2,177 (1 perm 404) |
+| Sénat PDF URLs | 2,177 (2008–2025, 2009-06-21 false positive removed) |
+| Sénat PDFs on disk | 2,177 (matches inventory) |
 | Sénat HTML-era sessions | 586 (2003–2007) |
-| **Total PDFs on disk** | **10,020** (= 7,843 AN + 2,177 Sénat) |
+| **Total PDFs on disk** | **10,020** (= 7,843 AN + 2,177 Sénat, matches inventory) |
 | AN 2017+ CRI coverage | **100%** (all CRI-published dates covered; 290 Réunions entries are non-CRI) |
-| Speeches extracted | 🔴 PENDING |
+| Speeches extracted | 🟡 PARTIAL — ~770 rows from 7 test PDFs |
 | Speaker resolutions | 🔴 PENDING |

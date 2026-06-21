@@ -230,3 +230,28 @@ For XII–XIV, the date is embedded in the filename (`{YYYYMMDD}.pdf`).
 For XI, the date is not directly in the filename — it appears in the
 session page HTML but hasn't been extracted programmatically yet.
 For XV–XVII, dates are embedded in the session slug within the URL.
+
+---
+
+## Sénat false positive removal — 2009-06-21 (Sunday, no PDF)
+
+**Date:** 2026-06-21 (audit)
+
+**Situation:** The Sénat inventory (`data/senat_inventory.csv`) previously
+contained an entry for 2009-06-21, derived from `data.senat.fr`'s official
+`debats.sql` dump. The URL
+`https://www.senat.fr/seances/s200906/s20090621/s20090621.pdf`
+reliably returns HTTP 404.
+
+**Diagnosis:** 2009-06-21 was a Sunday. The Sénat does not hold plenary
+sessions on Sundays under normal circumstances. The `debats.sql` entry
+likely refers to a procedural or administrative record that does not
+produce a published compte rendu PDF. This is a false positive in the
+data.senat.fr derived inventory.
+
+**Action:** Removed the 2009-06-21 entry from `data/senat_inventory.csv`
+on 2026-06-21. The download error log (`data/senat_download_errors.csv`)
+retains the entry as a record of the investigation.
+
+**Implication:** No coverage gap. The Sénat PDF-era total is now 2,177
+URLs (was 2,178), matching the actual count of PDFs on disk.
