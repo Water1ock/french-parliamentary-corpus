@@ -16,6 +16,7 @@ import io
 import json
 import re
 from collections import defaultdict
+from datetime import datetime
 from pathlib import Path
 
 import requests
@@ -31,9 +32,14 @@ def _normalise(name: str) -> str:
     """Normalise a senator name for lookup matching.
 
     Same logic as _normalise_name_key in extract_text.py.
-    Note: party resolution is year-level only (date_deb[:4]).
-    A senator switching groups mid-year will only record the first group.
-    For production use, consider full date-range resolution.
+
+    Year-range generation: for each senator membership record, entries are
+    created for EVERY year in the tenure range (date_deb year → date_fin year).
+    This ensures a debate from 2016 matches a membership that started in 2004
+    and ended in 2017.
+
+    When a senator has multiple memberships in the same year (e.g. switched
+    groups mid-year), the first group encountered in the CSV is stored.
     """
     name = name.strip()
     # Normalise whitespace
@@ -91,18 +97,33 @@ def fetch_senateurs():
 
         if not matricule or not nom:
             continue
-        if not matricule.isdigit():
-            continue
 
         full_name = f"{prenom} {nom}".strip()
         norm_name = _normalise(full_name)
 
-        # Extract year from date_deb (format: "1986-10-01 00:00:00.0" or "1986-10-01")
-        year = date_deb[:4] if date_deb and len(date_deb) >= 4 else ""
+        # Extract year range: create an entry for every year the senator
+        # held this group membership, so debates in any year match correctly.
+        yr_start = int(date_deb[:4]) if (date_deb and len(date_deb) >= 4) else None
+        yr_end = int(date_fin[:4]) if (date_fin and len(date_fin) >= 4) else None
 
-        lookup[(norm_name, year)] = groupe_nom
-        if groupe_nom:
-            group_counts[groupe_nom].add(norm_name)
+        # Determine the year(s) to create entries for
+        if yr_start and yr_end:
+            years = range(yr_start, yr_end + 1)
+        elif yr_start:
+            # Ongoing membership — extend to current year
+            years = range(yr_start, datetime.now().year + 1)
+        elif yr_end:
+            years = [yr_end]
+        else:
+            continue  # No date info at all
+
+        for year in years:
+            year_str = str(year)
+            # Only store the first group encountered for this (name, year)
+            if (norm_name, year_str) not in lookup:
+                lookup[(norm_name, year_str)] = groupe_nom
+                if groupe_nom:
+                    group_counts[groupe_nom].add(norm_name)
 
     # Build surname-only index for fallback lookups
     surname_idx = {}

@@ -45,6 +45,7 @@ REFERENCE_DIR = PROJECT_ROOT / "data" / "reference"
 SPEECHES_PATH = OUTPUT_DIR / "speeches.csv"
 EXTRACTION_LOG = OUTPUT_DIR / "extraction_log.csv"
 DEPUTES_CACHE = REFERENCE_DIR / "deputes_lookup.json"
+SENATEURS_CACHE = REFERENCE_DIR / "senateurs_lookup.json"
 
 DEPUTES_URL = (
     "http://data.assemblee-nationale.fr/static/openData/repository/17/amo/"
@@ -253,6 +254,25 @@ def load_deputes() -> dict:
     return {"lookup": lookup, "surname_idx": surname_idx}
 
 
+def load_senateurs() -> dict:
+    """Load cached senateurs lookup from disk.
+
+    Returns a dict with the same structure as load_deputes():
+      - "lookup": {(norm_name, year): group_name}
+      - "surname_idx": {surname: {year: party_or_None}}
+    """
+    if not SENATEURS_CACHE.exists():
+        print("  WARNING: senateurs_lookup.json not found — "
+              "run resolve_speakers/build_senat_lookup.py first")
+        return {"lookup": {}, "surname_idx": {}}
+    with open(SENATEURS_CACHE, "r", encoding="utf-8") as f:
+        raw = json.load(f)
+    lookup = {tuple(k.split("||")): v
+              for k, v in raw.get("lookup", {}).items()}
+    surname_idx = raw.get("surname_idx", {})
+    return {"lookup": lookup, "surname_idx": surname_idx}
+
+
 def _normalise_name_key(raw_name: str) -> str:
     """Normalise a speaker name for lookup matching.
 
@@ -281,29 +301,42 @@ def _normalise_name_key(raw_name: str) -> str:
 
 
 def resolve_party(speaker_name: str, legislature: str,
-                  depute_data: dict) -> str:
-    """Look up party for a speaker name and legislature.
+                  depute_data: dict,
+                  chamber: str = "", date: str = "",
+                  senateur_data: dict = None) -> str:
+    """Look up party for a speaker name and legislature (or year for Sénat).
 
     Strategy:
       1. Full-name match: normalise and match against lookup.
       2. Surname-only fallback: O(1) via pre-built reverse index.
          Returns "" (empty) if the surname is ambiguous (multiple
-         deputies with different parties in the same legislature).
+         legislators with different parties in the same period).
 
-    depute_data: dict with keys "lookup" and "surname_idx".
-    Returns party abbreviation (e.g. "LR", "SOC", "RE") or empty string.
+    For AN: uses legislature number as the lookup key.
+    For Sénat: uses the session year (extracted from date) as the lookup key.
+
+    Returns party/group name or empty string.
     """
-    if not speaker_name or not legislature or not depute_data:
+    # Choose the right lookup based on chamber
+    if chamber == "senat" and senateur_data:
+        data = senateur_data
+        # For Sénat, look up by year (extracted from debate date)
+        lookup_key = date[:4] if (date and len(date) >= 4) else ""
+    else:
+        data = depute_data
+        lookup_key = legislature
+
+    if not speaker_name or not lookup_key or not data:
         return ""
-    if not isinstance(depute_data, dict) or "lookup" not in depute_data:
+    if not isinstance(data, dict) or "lookup" not in data:
         return ""
 
-    lookup = depute_data.get("lookup", {})
-    surname_idx = depute_data.get("surname_idx", {})
+    lookup = data.get("lookup", {})
+    surname_idx = data.get("surname_idx", {})
 
     # Strategy 1: full-name match
     key = _normalise_name_key(speaker_name)
-    party = lookup.get((key, legislature), "")
+    party = lookup.get((key, lookup_key), "")
     if party:
         return party
 
@@ -311,9 +344,9 @@ def resolve_party(speaker_name: str, legislature: str,
     surname = key.strip()
     if " " not in surname and len(surname) > 2:
         leg_idx = surname_idx.get(surname, {})
-        if legislature in leg_idx:
-            party = leg_idx[legislature]
-            # None means ambiguous (multiple deputies, different parties)
+        if lookup_key in leg_idx:
+            party = leg_idx[lookup_key]
+            # None means ambiguous (multiple legislators, different parties)
             return party if party is not None else ""
 
     return ""
@@ -460,7 +493,8 @@ def _extract_page_columns(words: list[dict]) -> list[list[dict]]:
 # ------ Speaker-turn segmentation (Option A) --------------------------------------------------------------
 
 def _segment_speeches(lines: list[str], metadata: dict,
-                      depute_lookup: dict = None) -> list[SpeechRecord]:
+                      depute_lookup: dict = None,
+                      senateur_lookup: dict = None) -> list[SpeechRecord]:
     """
     State-machine segmentation of lines into speaker turns.
 
@@ -468,7 +502,7 @@ def _segment_speeches(lines: list[str], metadata: dict,
       - debate_title: captured from ALL-CAPS section headers
       - speaker_name: stripped of "M." / "Mme" prefix
       - speaker_role: extracted from trailing comma-separated affiliation
-      - speaker_party: resolved from depute_lookup (Option B)
+      - speaker_party: resolved from depute_lookup (AN) or senateur_lookup (Sénat)
     """
     speeches = []
     current_speaker = None
@@ -502,9 +536,14 @@ def _segment_speeches(lines: list[str], metadata: dict,
 
                 # Option B: resolve party
                 party = ""
-                if depute_lookup:
+                chamber = metadata.get("chamber", "")
+                date = metadata.get("date", "")
+                if depute_lookup or senateur_lookup:
                     party = resolve_party(
-                        speaker_name, metadata.get("legislature", ""), depute_lookup
+                        speaker_name, metadata.get("legislature", ""),
+                        depute_lookup,
+                        chamber=chamber, date=date,
+                        senateur_data=senateur_lookup,
                     )
 
                 speeches.append(SpeechRecord(
@@ -653,7 +692,8 @@ def _merge_interjections(speeches: list[SpeechRecord]) -> list[SpeechRecord]:
 # ------ Single PDF extraction ----------------------------------------------------------------------------------------------
 
 def extract_pdf(pdf_path: Path, metadata_override: Optional[dict] = None,
-                depute_lookup: dict = None) -> list[SpeechRecord]:
+                depute_lookup: dict = None,
+                senateur_lookup: dict = None) -> list[SpeechRecord]:
     """Extract structured speech records from a single PDF."""
     speeches = []
     with pdfplumber.open(str(pdf_path)) as pdf:
@@ -687,7 +727,9 @@ def extract_pdf(pdf_path: Path, metadata_override: Optional[dict] = None,
                 if line_text.strip():
                     text_lines.append(line_text)
 
-            page_speeches = _segment_speeches(text_lines, metadata, depute_lookup)
+            page_speeches = _segment_speeches(
+                text_lines, metadata, depute_lookup, senateur_lookup
+            )
             for sp in page_speeches:
                 sp.page = page_idx + 1
             speeches.extend(page_speeches)
@@ -700,13 +742,15 @@ def extract_pdf(pdf_path: Path, metadata_override: Optional[dict] = None,
 # ------ Batch processing ------------------------------------------------------------------------------------------------
 
 def extract_pdfs(pdf_paths: list[Path], depute_lookup: dict = None,
+                 senateur_lookup: dict = None,
                  append_path: Optional[Path] = None,
                  log_path: Optional[Path] = None) -> list[SpeechRecord]:
     """Process multiple PDFs sequentially with checkpoint-resume.
 
     Args:
         pdf_paths: List of PDF paths to process.
-        depute_lookup: Optional depute->party lookup dict.
+        depute_lookup: Optional AN depute->party lookup dict.
+        senateur_lookup: Optional Sénat senator->group lookup dict.
         append_path: If set, append each PDF's results incrementally.
         log_path: If set, write per-file extraction log.
 
@@ -753,7 +797,8 @@ def extract_pdfs(pdf_paths: list[Path], depute_lookup: dict = None,
 
         start = time.time()
         try:
-            speeches = extract_pdf(path, depute_lookup=depute_lookup)
+            speeches = extract_pdf(path, depute_lookup=depute_lookup,
+                                   senateur_lookup=senateur_lookup)
             all_speeches.extend(speeches)
             n = len(speeches)
             duration = time.time() - start
@@ -879,7 +924,7 @@ TEST_SAMPLES = {
 }
 
 
-def _run_test_batch(depute_lookup: dict = None):
+def _run_test_batch(depute_lookup: dict = None, senateur_lookup: dict = None):
     """Run extraction on the 7-PDF test batch and print results."""
     print("=" * 70)
     print("TEST BATCH -- Option A + B extraction on 7 PDFs")
@@ -897,7 +942,8 @@ def _run_test_batch(depute_lookup: dict = None):
         print(f"  {era_label}")
         print(f"  {'-'*60}")
         try:
-            speeches = extract_pdf(path, depute_lookup=depute_lookup)
+            speeches = extract_pdf(path, depute_lookup=depute_lookup,
+                                   senateur_lookup=senateur_lookup)
             by_era[era_label] = speeches
             all_speeches.extend(speeches)
             print(f"  Speeches: {len(speeches)}")
@@ -938,7 +984,8 @@ def _run_test_batch(depute_lookup: dict = None):
         matched = sum(1 for s in an_speeches if s.speaker_party)
         print(f"\n  AN party match rate: {matched}/{len(an_speeches)} = {matched/len(an_speeches)*100:.1f}%")
     if senat_speeches:
-        print(f"  Sénat party resolution: N/A (separate lookup needed)")
+        matched = sum(1 for s in senat_speeches if s.speaker_party)
+        print(f"  Sénat party match rate: {matched}/{len(senat_speeches)} = {matched/len(senat_speeches)*100:.1f}%")
         print(f"  Sénat speeches extracted: {len(senat_speeches)}")
 
     # Sample debate titles
@@ -1001,8 +1048,18 @@ def main():
         print(f"  WARNING: Could not load deputes: {e}")
         depute_lookup = {}
 
+    # Load senateurs lookup (Option B for Sénat)
+    print("Loading senateurs lookup...")
+    try:
+        senateur_lookup = load_senateurs()
+        n_senat = len(senateur_lookup["lookup"]) if "lookup" in senateur_lookup else 0
+        print(f"  Loaded {n_senat:,} senator->group mappings")
+    except Exception as e:
+        print(f"  WARNING: Could not load senateurs: {e}")
+        senateur_lookup = {}
+
     if is_test:
-        _run_test_batch(depute_lookup)
+        _run_test_batch(depute_lookup, senateur_lookup)
         return
 
     # Full-corpus mode
@@ -1016,6 +1073,7 @@ def main():
     all_speeches = extract_pdfs(
         pdf_paths,
         depute_lookup=depute_lookup,
+        senateur_lookup=senateur_lookup,
         append_path=SPEECHES_PATH,
         log_path=EXTRACTION_LOG,
     )
