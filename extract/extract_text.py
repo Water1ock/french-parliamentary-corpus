@@ -45,6 +45,7 @@ REFERENCE_DIR = PROJECT_ROOT / "data" / "reference"
 SPEECHES_PATH = OUTPUT_DIR / "speeches.csv"
 EXTRACTION_LOG = OUTPUT_DIR / "extraction_log.csv"
 DEPUTES_CACHE = REFERENCE_DIR / "deputes_lookup.json"
+DEPUTES_LEG11_CACHE = REFERENCE_DIR / "deputes_leg11_lookup.json"
 SENATEURS_CACHE = REFERENCE_DIR / "senateurs_lookup.json"
 
 DEPUTES_URL = (
@@ -233,6 +234,22 @@ def load_deputes() -> dict:
         lookup = {tuple(k.split("||")): v for k, v in raw.items()}
     else:
         lookup = fetch_deputes()
+
+    # Build surname reverse index for O(1) lookups
+    # Merge Leg 11 Wikipedia-sourced lookup if available
+    if DEPUTES_LEG11_CACHE.exists():
+        with open(DEPUTES_LEG11_CACHE, "r", encoding="utf-8") as f:
+            leg11_raw = json.load(f)
+        leg11_lookup = {tuple(k.split("||")): v
+                        for k, v in leg11_raw.get("lookup", {}).items()}
+        # Merge: only add Leg 11 entries if no AMO30 entry exists for that key
+        for k, v in leg11_lookup.items():
+            if k not in lookup:
+                lookup[k] = v
+        n_leg11 = len(leg11_lookup)
+        n_merged = sum(1 for k in leg11_lookup if k in lookup)
+        print(f"  Merged {n_merged:,} Leg 11 entries from Wikipedia lookup"
+              f" ({n_leg11:,} total)")
 
     # Build surname reverse index for O(1) lookups
     surname_map = defaultdict(list)
