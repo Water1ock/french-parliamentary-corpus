@@ -100,7 +100,7 @@ PAGE_HEADER_RE = re.compile(
     r"|"
     r"(?:ASSEMBL[ÉE]E\s*NATIONALE|S[ÉE]NAT)\s+[\u2010-\u2015\u2212\uF6BB\-–]"
     r"(?:\s*\d+(?:re?|e|ème))?"
-    r"(?:\s*S[ÉE]ANCE(?:\s+DU\s+\d{1,2}\s+[A-Za-zÀ-ÿ]+\s+\d{4})?)?"
+    r"(?:\s*S[ÉE]ANCE(?:\s+DU(?:\s+\d{1,2}\s+[A-Za-zÀ-ÿ]+\s+\d{4})?)?)?"
     r"|"
     r"DU\s+\d{1,2}\s+[A-ZÀ-ÿ]+\s+\d{4}"
     r")"
@@ -581,7 +581,10 @@ def _segment_speeches(lines: list[str], metadata: dict,
                             r"\b(que|qui|dans|pour|avec|sur|est|sont|soit|cas"
                             r"|fait|peut|doit|ainsi|alors|donc|aussi|très"
                             r"|bien|plus|moins|après|avant|contre|entre|selon"
-                            r"|présente|projet|loi|relatif|actuellement)\b",
+                            r"|présente|projet|loi|relatif|actuellement"
+                            r"|je|vous|nous|ne|pas|madame|monsieur"
+                            r"|comprends|comprenez|votre|notre|voudrais|voudriez"
+                            r"|souhaite|souhaitez|pense|pensez|crois|croyez)\b",
                             stripped, re.IGNORECASE
                         )
                         and not re.search(r"[.;!?]$", stripped)):
