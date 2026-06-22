@@ -88,19 +88,19 @@ NAME_ROLE_SPLIT_RE = re.compile(r"^([^,]+),\s*(.+)$")
 #   "SÉANCE DU 9 DÉCEMBRE 1997"
 #   "SÉANCE DU 13 OCTOBRE 1999 7237"
 #   "48 ASSEMBLÉE NATIONALE – 2e"
-#   "ASSEMBLÉE NATIONALE – 2e"
+#   "ASSEMBLÉE NATIONALE – 1re"
 #   "4 ASSEMBLÉE NATIONALE –"
+#   "4246 SÉNAT – SÉANCE"
 #   "4244 SÉNAT – SÉANCE DU 17 MARS 2016"
-#   "SÉNAT – SÉANCE DU 17 MARS 2016"
 #   "DU 17 MARS 2016"
 PAGE_HEADER_RE = re.compile(
     r"^(?:\d+\s+)?"
     r"(?:"
     r"S[ÉE]ANCE\s+DU\s+\d{1,2}\s+[A-Za-zÀ-ÿ]+\s+\d{4}"
     r"|"
-    r"(?:ASSEMBL[ÉE]E\s*NATIONALE|S[ÉE]NAT)\s*[–-]"
-    r"(?:\s*\d+[e])?"
-    r"(?:\s*S[ÉE]ANCE\s+DU\s+\d{1,2}\s+[A-Za-zÀ-ÿ]+\s+\d{4})?"
+    r"(?:ASSEMBL[ÉE]E\s*NATIONALE|S[ÉE]NAT)\s+[\u2010-\u2015\u2212\uF6BB\-–]"
+    r"(?:\s*\d+(?:re?|e|ème))?"
+    r"(?:\s*S[ÉE]ANCE(?:\s+DU\s+\d{1,2}\s+[A-Za-zÀ-ÿ]+\s+\d{4})?)?"
     r"|"
     r"DU\s+\d{1,2}\s+[A-ZÀ-ÿ]+\s+\d{4}"
     r")"
@@ -574,12 +574,17 @@ def _segment_speeches(lines: list[str], metadata: dict,
         # Continuation line
         if current_speaker and not current_text:
             if "," in stripped and not stripped.rstrip().endswith("."):
-                if len(stripped) < 80 and not re.search(
-                    r"\b(que|qui|dans|pour|avec|sur|est|sont|soit|cas"
-                    r"|fait|peut|doit|ainsi|alors|donc|aussi|très"
-                    r"|bien|plus|moins|après|avant|contre|entre|selon)\b",
-                    stripped, re.IGNORECASE
-                ):
+                # Only treat as role if line is short and doesn't look like speech
+                # (no speech-signalling words, no sentence-like structure)
+                if (len(stripped) < 80
+                        and not re.search(
+                            r"\b(que|qui|dans|pour|avec|sur|est|sont|soit|cas"
+                            r"|fait|peut|doit|ainsi|alors|donc|aussi|très"
+                            r"|bien|plus|moins|après|avant|contre|entre|selon"
+                            r"|présente|projet|loi|relatif|actuellement)\b",
+                            stripped, re.IGNORECASE
+                        )
+                        and not re.search(r"[.;!?]$", stripped)):
                     current_role += (" " + stripped.rstrip(",")).strip()
                     continue
         if current_text is not None:
