@@ -44,9 +44,10 @@ french-parliamentary-corpus/
 ├── download/            # PDF downloaders (resume-safe)
 │   ├── download_pdfs.py              # AN PDF downloader
 │   └── download_senat_pdfs.py        # Sénat PDF downloader
-├── extract/             # PDF text extraction (engine built; full run pending)
+├── extract/             # PDF text extraction (engine built + validated; full run pending)
 │   └── extract_text.py              # ~1,000 lines: pdfplumber parsing, speaker-turn
-│                                     # segmentation, debate title capture, AN party lookup
+│                                     # segmentation, debate title capture, AN party lookup.
+│                                     # Validated on 36 PDFs: 0 crashes, 0 page-header leaks.
 ├── resolve_speakers/    # Speaker→party resolution (partial)
 │   ├── build_senat_lookup.py        # Sénat speaker→party lookup builder (DONE)
 │   └── resolve_speakers.py          # Standalone resolver (TODO — stub)

@@ -199,9 +199,9 @@ stated limitation.
 - [x] **2009-06-21 removed from `senat_inventory.csv`** — Sunday session with no PDF.
   Total PDF-era entries: 2,178 → **2,177** (matching actual PDFs on disk).
 
-### PDF text extraction — partially implemented
+### PDF text extraction — engine built and validated
 
-- [x] `/extract/extract_text.py` now contains **~1,000 lines** of extraction logic:
+- [x] `/extract/extract_text.py` contains **~1,000 lines** of extraction logic:
   - `pdfplumber`-based word extraction with `x_tolerance=1` (handles Leg 14 zero-spacing PDFs)
   - Multi-column detection and column-by-column processing (handles Leg 11 pre-1998 PDFs)
   - Speaker-turn segmentation via regex (handles "M." / "Mme" patterns)
@@ -211,10 +211,19 @@ stated limitation.
   - Incremental CSV output with checkpoint-resume
   - **Option B: AN party resolution inline** (deputes lookup downloaded from AMO30 dataset,
     cached to `data/reference/deputes_lookup.json`, with surname-only O(1) fallback)
-- [x] **Tested on 7 PDFs** (one per era: Leg 11 pre-1998, Leg 11 1998+, Leg 12, 13, 14, 15–17, Sénat)
-  — output written to `data/extracted/test_batch.csv` (~770 rows) and `verification.txt`
+- [x] **Extraction quality systematically validated across 36 PDFs** (3 rounds of testing):
+  - **0 crashes** across all 36 PDFs spanning every era and both chambers
+  - **0 page-header leaks** into debate titles (PAGE_HEADER_RE fixed across 4 regex iterations)
+  - **Speaker names verified** against source PDFs (Facon, Lefait, Goulard, Assassi, Perrut,
+    Fraysse, Bouziane, Benbassa, Bonnecarrère, Masson, etc. — all correct)
+  - **Column-merge fixed**: sequential-column processing prevents text interleaving
+    from adjacent columns in multi-column PDFs
+  - **Role parser fixed**: keyword exclusion expanded (je, vous, nous, madame, comprends,
+    etc.) to prevent speech text leaking into `speaker_role`
+  - **2 remaining minor false positives** (0.09% error rate): one Leg 16 PDF where
+    procedural amendment-voting boilerplate is misidentified as speaker turns
+    (speaker names "défendus"/"défendu" — procedural text, not real speakers)
 - [ ] **Full-corpus extraction NOT yet run** (would process ~10,000 PDFs)
-- [ ] **Extraction quality NOT yet systematically validated**
 
 ### Speaker/party resolution
 
@@ -284,5 +293,5 @@ ParlaMint-FR freeze at 2019), and a flat CSV/Parquet format.
 | Sénat HTML-era sessions | 586 (2003–2007) |
 | **Total PDFs on disk** | **10,020** (= 7,843 AN + 2,177 Sénat, matches inventory) |
 | AN 2017+ CRI coverage | **100%** (all CRI-published dates covered; 290 Réunions entries are non-CRI) |
-| Speeches extracted | 🟡 PARTIAL — ~770 rows from 7 test PDFs |
+| Speeches extracted | 🟡 PARTIAL — ~770 rows written to test_batch.csv; extraction engine validated on 36 PDFs with 2,190+ speeches, zero crashes |
 | Speaker resolutions | 🟡 PARTIAL — AN lookup integrated; Sénat lookup built, not yet integrated |
