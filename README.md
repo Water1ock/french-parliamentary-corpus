@@ -34,6 +34,29 @@ Only **plenary (full chamber) sessions** are covered. Committee/commission debat
 | `session_type` | `ordinaire` or `extraordinaire` (AN only for now) |
 | `speaker_role` | `président`, `ministre`, `député`, `sénateur` (best effort) |
 
+## Planned future additions
+
+### Linguistic annotation (deferred — post core extraction)
+
+Once the baseline CSV corpus is complete, we plan to add an optional
+linguistically-annotated layer with the following columns:
+
+| Annotation | Column | Description |
+|---|---|---|
+| **POS** (Part-of-Speech) | `speech_pos` | Grammatical role tags per token (e.g. NOUN, VERB, DET) |
+| **Lemmas** | `speech_lemma` | Dictionary root form per token (e.g. "parlions" → "parler") |
+| **NER** (Named Entity Recognition) | `speech_ner` | Entity spans tagged as PERSON, ORG, LOC, DATE, etc. |
+
+This will be produced as a separate `speeches_annotated.csv` (or Parquet) file
+so the baseline CSV remains dependency-free. Target library: spaCy with
+`fr_core_news_lg` or Stanza with the French model. Annotation will run as a
+post-processing pass after the core extraction pipeline, not inline.
+
+These annotations are absent by design from the baseline release — our primary
+audience (computational social scientists) works with raw text in pandas/R/SQL.
+Users requiring linguistic annotation can also apply off-the-shelf tools
+to the flat CSV output in their own workflows.
+
 ## Repository structure
 
 ```
@@ -51,6 +74,8 @@ french-parliamentary-corpus/
 ├── resolve_speakers/    # Speaker→party resolution (DONE)
 │   ├── build_senat_lookup.py        # Sénat speaker→party lookup builder (DONE)
 │   └── resolve_speakers.py          # Standalone resolver (TODO — stub)
+├── annotate/            # Linguistic annotation (planned — deferred)
+│   └── (post-processing pass after core extraction is complete)
 ├── pipeline/            # Orchestrator scripts
 │   └── run_pipeline.py
 ├── tests/               # Verification scripts (methodology evidence)

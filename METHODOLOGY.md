@@ -295,3 +295,25 @@ consistency verification rather than genuine independent validation.
 
 This is an institutional reality, not a collection failure. We document it
 as a stated limitation.
+
+---
+
+## Planned future additions — linguistic annotation
+
+ParisParl (1996–2019) and ParlaMint-FR include linguistic annotation layers
+(POS tags, lemmas, NER). Our corpus deliberately omits these from the baseline
+release to keep the CSV dependency-free and immediately loadable in pandas/R/SQL.
+
+We plan to add an optional annotation layer as a post-processing pass after
+the core extraction pipeline is complete. This will be a separate
+`annotate/` module that reads `speeches.csv` and produces
+`speeches_annotated.csv` (or Parquet) with additional columns:
+
+- `speech_pos` — Part-of-Speech tags per token
+- `speech_lemma` — Lemmatised forms per token
+- `speech_ner` — Named Entity spans (PERSON, ORG, LOC, DATE, etc.)
+
+Target library: spaCy (`fr_core_news_lg`) or Stanza (French model).
+Annotation is computationally expensive (days of processing for hundreds
+of thousands of speeches) and is deferred until all core pipeline stages
+are complete and validated.

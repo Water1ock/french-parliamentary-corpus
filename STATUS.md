@@ -260,6 +260,16 @@ The Sénat's digital archive begins January 2003. Pre-2003 debates exist only
 as Journal Officiel scans via Gallica (BNF). This is an institutional
 limitation, documented as a stated limitation.
 
+### Linguistic annotation (POS, lemmas, NER) — deferred
+
+ParisParl and ParlaMint-FR include linguistic annotation (POS tags, lemmas,
+NER). This is a planned future addition to our corpus, to be implemented as
+a post-processing pass after the core extraction pipeline is complete. The
+baseline CSV release will remain annotation-free by design — our primary
+audience (computational social scientists) works with raw text. Target
+approach: spaCy (`fr_core_news_lg`) or Stanza applied to `speeches.csv`
+as a separate `annotate/` module, producing `speeches_annotated.csv`.
+
 ### License choice
 
 - CC-BY-4.0 for the data / MIT for the code — **confirm with author**
