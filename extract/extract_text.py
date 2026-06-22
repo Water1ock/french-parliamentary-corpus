@@ -83,10 +83,28 @@ SPEAKER_TURN_RE = re.compile(
 
 NAME_ROLE_SPLIT_RE = re.compile(r"^([^,]+),\s*(.+)$")
 
-# Page-header lines that contain session date but not the actual debate topic
-# Examples: "SÉANCE DU 9 DÉCEMBRE 1997", "SÉANCE DU 13 OCTOBRE 1999 7237"
+# Page-header lines that contain session date but not the actual debate topic.
+# Matches patterns like:
+#   "SÉANCE DU 9 DÉCEMBRE 1997"
+#   "SÉANCE DU 13 OCTOBRE 1999 7237"
+#   "48 ASSEMBLÉE NATIONALE – 2e"
+#   "ASSEMBLÉE NATIONALE – 2e"
+#   "4 ASSEMBLÉE NATIONALE –"
+#   "4244 SÉNAT – SÉANCE DU 17 MARS 2016"
+#   "SÉNAT – SÉANCE DU 17 MARS 2016"
+#   "DU 17 MARS 2016"
 PAGE_HEADER_RE = re.compile(
-    r"^(?:\d+\s+)?S[ÉE]ANCE\s+DU\s+\d{1,2}\s+[A-Za-zÀ-ÿ]+\s+\d{4}(?:\s+\d+)?$",
+    r"^(?:\d+\s+)?"
+    r"(?:"
+    r"S[ÉE]ANCE\s+DU\s+\d{1,2}\s+[A-Za-zÀ-ÿ]+\s+\d{4}"
+    r"|"
+    r"(?:ASSEMBL[ÉE]E\s*NATIONALE|S[ÉE]NAT)\s*[–-]"
+    r"(?:\s*\d+[e])?"
+    r"(?:\s*S[ÉE]ANCE\s+DU\s+\d{1,2}\s+[A-Za-zÀ-ÿ]+\s+\d{4})?"
+    r"|"
+    r"DU\s+\d{1,2}\s+[A-ZÀ-ÿ]+\s+\d{4}"
+    r")"
+    r"(?:\s+\d+)?$",
     re.IGNORECASE,
 )
 
@@ -557,7 +575,9 @@ def _segment_speeches(lines: list[str], metadata: dict,
         if current_speaker and not current_text:
             if "," in stripped and not stripped.rstrip().endswith("."):
                 if len(stripped) < 80 and not re.search(
-                    r"\b(que|qui|dans|pour|avec|sur|est|sont)\b",
+                    r"\b(que|qui|dans|pour|avec|sur|est|sont|soit|cas"
+                    r"|fait|peut|doit|ainsi|alors|donc|aussi|très"
+                    r"|bien|plus|moins|après|avant|contre|entre|selon)\b",
                     stripped, re.IGNORECASE
                 ):
                     current_role += (" " + stripped.rstrip(",")).strip()
@@ -645,10 +665,11 @@ def extract_pdf(pdf_path: Path, metadata_override: Optional[dict] = None,
             if len(columns) == 1:
                 all_lines = _words_to_lines(words)
             else:
-                all_lines_raw = []
+                # Process columns sequentially (left first, then right)
+                # so column contents are not interleaved
+                all_lines = []
                 for col_words in columns:
-                    all_lines_raw.extend(_words_to_lines(col_words))
-                all_lines = sorted(all_lines_raw, key=lambda ln: ln[0]["top"] if ln else 0)
+                    all_lines.extend(_words_to_lines(col_words))
 
             text_lines = []
             for line in all_lines:
