@@ -209,27 +209,32 @@ when index pages list cross-legislature content.
 
 ---
 
-## Remaining unknowns
+## Remaining unknowns (resolved)
 
-### Sénat (French Senate)
-The Sénat site structure has NOT been fully mapped. Preliminary exploration:
-- Monthly index: `senat.fr/seances/s{YYYYMM}/`
-- Accessible from ~2003 onward; 403 for earlier dates
-- Session link patterns vary by year
-- PDF URL derivation not yet determined
+All items in this section at time of original writing have since been resolved.
 
-See `tests/test_coverage_gaps.py` for the current state of exploration.
+### Sénat (French Senate) ✅ RESOLVED
 
-### Session type extraction (ordinaire vs extraordinaire)
-For legislatures XII–XIV, session types are encoded in the session slug
-(e.g. `2002-2003-extra`). For XI and XV–XVII, the type needs to be
-determined from the session date or metadata — not yet implemented.
+The Sénat has been fully mapped. The `data.senat.fr` debats.sql dump provides
+the authoritative session calendar for 2003–present. URL patterns:
+- **Session page**: `/seances/s{YYYYMM}/s{YYYYMMDD}/st{YYYYMMDD}000.html`
+- **PDF**: `/seances/s{YYYYMM}/s{YYYYMMDD}/s{YYYYMMDD}.pdf`
 
-### Date extraction from PDF filenames
-For XII–XIV, the date is embedded in the filename (`{YYYYMMDD}.pdf`).
-For XI, the date is not directly in the filename — it appears in the
-session page HTML but hasn't been extracted programmatically yet.
-For XV–XVII, dates are embedded in the session slug within the URL.
+Inventory built: 2,764 sessions (586 HTML-era 2003–2007 + 2,177 PDF-era 2008–2025,
+after 1 false positive removed). All PDFs downloaded. See
+`inventory/build_senat_url_inventory.py` for the full methodology.
+
+### Date extraction from PDF filenames ✅ RESOLVED
+
+Now implemented in `extract_text.py` via `_extract_metadata()`. Dates are
+extracted from the cover page text using regex matching against French month
+names. Falls back to filename parsing when cover-page extraction fails.
+
+### Session type extraction (ordinaire vs extraordinaire) ✅ RESOLVED
+
+Now implemented in `extract_text.py`. For AN XII–XIV, session types are parsed
+from session slugs. For all legislatures, the filename and cover page text are
+checked for "extraordinaire". Default is "ordinaire".
 
 ---
 

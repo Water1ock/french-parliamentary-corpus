@@ -201,20 +201,34 @@ stated limitation.
 
 ### PDF text extraction — partially implemented
 
-- [x] `/extract/extract_text.py` now contains **~770 lines** of extraction logic:
+- [x] `/extract/extract_text.py` now contains **~1,000 lines** of extraction logic:
   - `pdfplumber`-based word extraction with `x_tolerance=1` (handles Leg 14 zero-spacing PDFs)
   - Multi-column detection and column-by-column processing (handles Leg 11 pre-1998 PDFs)
   - Speaker-turn segmentation via regex (handles "M." / "Mme" patterns)
-  - Cross-page speech merging
-  - Metadata extraction from cover pages
+  - Cross-page speech merging and interjection merging
+  - Debate title capture from ALL-CAPS section headers
+  - Metadata extraction from cover pages (date, legislature, chamber, session_type)
+  - Incremental CSV output with checkpoint-resume
+  - **Option B: AN party resolution inline** (deputes lookup downloaded from AMO30 dataset,
+    cached to `data/reference/deputes_lookup.json`, with surname-only O(1) fallback)
 - [x] **Tested on 7 PDFs** (one per era: Leg 11 pre-1998, Leg 11 1998+, Leg 12, 13, 14, 15–17, Sénat)
   — output written to `data/extracted/test_batch.csv` (~770 rows) and `verification.txt`
 - [ ] **Full-corpus extraction NOT yet run** (would process ~10,000 PDFs)
 - [ ] **Extraction quality NOT yet systematically validated**
 
-### Speaker/party resolution (`resolve_speakers/resolve_speakers.py`)
+### Speaker/party resolution
 
-- [ ] **Not yet implemented** — pending schema resolution (see below)
+- [x] **AN deputes lookup BUILT and INTEGRATED** — inline in `extract_text.py`.
+  Downloads AMO30 dataset from `data.assemblee-nationale.fr`, builds
+  `deputes_lookup.json` with (norm_name, legislature) → party mapping.
+  Surname-only O(1) fallback for partial matches.
+- [x] **Sénat lookup BUILT** — `resolve_speakers/build_senat_lookup.py` downloads
+  ODSEN_HISTOGROUPES.csv from `data.senat.fr`, builds `senateurs_lookup.json`
+  with (norm_name, year) → group mapping.
+- [ ] **Sénat lookup NOT YET INTEGRATED** into `extract_text.py` — Sénat speeches
+  currently get `speaker_party = ""` during extraction.
+- [ ] **Standalone module** (`resolve_speakers/resolve_speakers.py`) is still a stub —
+  the resolution logic lives inline in `extract_text.py` for now.
 
 ### AN 2017+ inventory gaps
 
@@ -224,23 +238,36 @@ stated limitation.
 
 ## OPEN DESIGN QUESTIONS
 
-(unchanged from previous version — speaker resolution, Sénat HTML-era, license)
+### Sénat party resolution integration
 
-### Speaker name→party resolution methodology
-
-This is an **unsolved design problem**.
-
-### Sénat 2000–2002 gap
-
-The Sénat's digital archive begins January 2003.
+The `build_senat_lookup.py` script and `senateurs_lookup.json` cache exist.
+The resolution logic needs to be wired into `extract_text.py` so Sénat speeches
+get `speaker_party` populated. The design is resolved (same pattern as AN:
+full-name match + surname-only fallback); only the integration code is pending.
 
 ### Sénat 2003–2007 HTML-era sessions
 
-586 HTML sessions need scraping, not PDF extraction.
+586 HTML sessions need scraping, not PDF extraction. This is the largest
+remaining pipeline gap. Either build the scraper before dataset paper
+submission or scope the paper to the PDF-era only.
+
+### Sénat 2000–2002 gap
+
+The Sénat's digital archive begins January 2003. Pre-2003 debates exist only
+as Journal Officiel scans via Gallica (BNF). This is an institutional
+limitation, documented as a stated limitation.
 
 ### License choice
 
 - CC-BY-4.0 for the data / MIT for the code — **confirm with author**
+
+### Dataset paper framing
+
+The corpus is being prepared for submission as a dataset paper. Target venues:
+*Language Resources & Evaluation*, *Scientific Data*, or similar. The key novel
+contributions are dual-chamber coverage (no existing French parliamentary corpus
+includes the Sénat), temporal extension through December 2025 (ParisParl and
+ParlaMint-FR freeze at 2019), and a flat CSV/Parquet format.
 
 ---
 
@@ -258,4 +285,4 @@ The Sénat's digital archive begins January 2003.
 | **Total PDFs on disk** | **10,020** (= 7,843 AN + 2,177 Sénat, matches inventory) |
 | AN 2017+ CRI coverage | **100%** (all CRI-published dates covered; 290 Réunions entries are non-CRI) |
 | Speeches extracted | 🟡 PARTIAL — ~770 rows from 7 test PDFs |
-| Speaker resolutions | 🔴 PENDING |
+| Speaker resolutions | 🟡 PARTIAL — AN lookup integrated; Sénat lookup built, not yet integrated |

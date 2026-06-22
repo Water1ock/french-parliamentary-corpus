@@ -44,10 +44,12 @@ french-parliamentary-corpus/
 ├── download/            # PDF downloaders (resume-safe)
 │   ├── download_pdfs.py              # AN PDF downloader
 │   └── download_senat_pdfs.py        # Sénat PDF downloader
-├── extract/             # PDF text extraction (TODO — stub)
-│   └── extract_text.py
-├── resolve_speakers/    # Speaker→party resolution (TODO — open design)
-│   └── resolve_speakers.py
+├── extract/             # PDF text extraction (engine built; full run pending)
+│   └── extract_text.py              # ~1,000 lines: pdfplumber parsing, speaker-turn
+│                                     # segmentation, debate title capture, AN party lookup
+├── resolve_speakers/    # Speaker→party resolution (partial)
+│   ├── build_senat_lookup.py        # Sénat speaker→party lookup builder (DONE)
+│   └── resolve_speakers.py          # Standalone resolver (TODO — stub)
 ├── pipeline/            # Orchestrator scripts
 │   └── run_pipeline.py
 ├── tests/               # Verification scripts (methodology evidence)
@@ -90,6 +92,11 @@ python download/download_pdfs.py
 python download/download_senat_pdfs.py
 # Output: data/pdfs/ (Sénat PDFs, gitignored)
 
+# Step 3: Extract text from PDFs (test batch first)
+python extract/extract_text.py --test     # 7-PDF test batch
+python extract/extract_text.py            # Full corpus (~10,000 PDFs)
+# Output: data/extracted/speeches.csv
+
 # Or run the full pipeline:
 python pipeline/run_pipeline.py
 ```
@@ -101,6 +108,15 @@ See **[STATUS.md](STATUS.md)** for a detailed breakdown of what is DONE, what is
 ## License
 
 **TBD** — decision pending. Likely CC-BY-4.0 for the dataset and MIT for the code. See [LICENSE](LICENSE) for the current placeholder.
+
+## Target publication
+
+This corpus is being prepared for submission as a dataset paper. Target venues:
+*Language Resources & Evaluation*, *Scientific Data*, or similar. The key
+novel contributions are dual-chamber coverage (no existing French parliamentary
+corpus includes the Sénat), temporal extension through December 2025 (ParisParl
+and ParlaMint-FR freeze at 2019), and a flat CSV/Parquet format optimised for
+computational social science workflows.
 
 ## Citation
 
