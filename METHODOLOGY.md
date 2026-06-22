@@ -255,3 +255,38 @@ retains the entry as a record of the investigation.
 
 **Implication:** No coverage gap. The Sénat PDF-era total is now 2,177
 URLs (was 2,178), matching the actual count of PDFs on disk.
+
+---
+
+## Independent validation limitations
+
+### AN Legislatures XI–XIV (1997–2017)
+
+No independent structured calendar dataset exists for this period. The AN's
+structured open-data programme (`data.assemblee-nationale.fr`) began around
+2017 with the dyn/ portal launch. The Réunions/Agenda datasets that enable
+independent cross-validation for legislatures XV–XVII do not extend backward.
+The AMO30 historical dataset covers XI onward but is biographical/mandate
+data, not a session calendar.
+
+For legislatures XI–XIV, the CRI PDF archives themselves are the primary source.
+Our internal consistency checks provide the best available validation: sequential
+numbering on Leg 11 shows zero gaps across all 8 sessions; Legs 12–14 show
+contiguous date ranges per session. This is a stated limitation, not a
+pipeline gap.
+
+### Sénat (all periods)
+
+The Sénat's digital archive is a closed institutional system. `data.senat.fr`
+is the sole authoritative structured data provider. Every other source investigated
+— `data.gouv.fr`, `data.europa.eu`, Légifrance, NosSénateurs/Regards Citoyens,
+Gallica, and academic projects — either republishes data originally from
+`data.senat.fr` or does not track session calendars at all.
+
+The `debats.sql` dump used for cross-validating the Sénat PDF-era inventory
+is still a `data.senat.fr` product — a different format (database dump vs.
+scraped HTML), but the same underlying database. This provides internal
+consistency verification rather than genuine independent validation.
+
+This is an institutional reality, not a collection failure. We document it
+as a stated limitation.

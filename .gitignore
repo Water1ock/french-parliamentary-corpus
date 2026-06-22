@@ -9,11 +9,22 @@ __pycache__/
 data/pdfs/
 data/raw_html/
 data/debats.zip
+data/download_errors.csv
+data/senat_download_errors.csv
+data/senat_comptes_rendus.html
+data/senat_s202301_target.html
+data/extracted/
+data/reference/
+inventory/data/
 
 # Scratch and drafts — uncommitted exploration
 notes/
 scratch/
 *.draft.md
+data/_audit_*.py
+data/_expanded_sample.txt
+data/_run_expanded_sample.py
+data/_time_remaining.py
 
 # OS artefacts
 .DS_Store

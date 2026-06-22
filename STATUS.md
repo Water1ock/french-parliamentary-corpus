@@ -132,9 +132,43 @@
 | **Sénat 2000–2002** | No source available (403 on archives, Gallica only) | Known gap — Journal Officiel scans only |
 | **Sénat 2003–2007** | 586 HTML-era sessions catalogued, no PDFs | Separate extraction path needed |
 
-No genuinely independent structured calendar source exists for the Sénat —
-`data.senat.fr` is the sole authoritative structured data provider. For AN
-pre-2017, no structured calendar dataset was found on `data.assemblee-nationale.fr`.
+### Independent validation limitations
+
+**AN Legislatures XI–XIV (1997–2017):** No independent structured calendar dataset
+exists for this period. We investigated every plausible source:
+
+| Source | Why it doesn't qualify |
+|---|---|
+| `data.assemblee-nationale.fr` Réunions/Agenda datasets | Only cover legislature XV onward (2017+). No structured agenda data exists for XI–XIV. |
+| `data.assemblee-nationale.fr` AMO30 dataset | Covers XI onward but is actor-centric (biographical/mandate data), not a session calendar. |
+| `archives.assemblee-nationale.fr` | HTML index pages are the SOURCE of our inventory, not an independent validator. |
+
+This is an institutional reality, not a pipeline gap: the AN's structured open-data
+programme began around 2017, coinciding with the dyn/ portal launch. For the
+1997–2017 period, the CRI PDF archives themselves are the primary source.
+Our internal consistency checks (Leg 11 sequential numbering: zero gaps across
+all sessions; Legs 12–14: all session dates mapped contiguously) are the best
+available validation. We document this as a stated limitation rather than
+overclaiming completeness.
+
+**Sénat (all periods):** No genuinely independent structured calendar source
+exists for the Sénat. We investigated every plausible alternative:
+
+| Source | Why it doesn't qualify |
+|---|---|
+| `data.gouv.fr` | Re-publishes datasets originating from `data.senat.fr`; same underlying source. |
+| `data.europa.eu` | Harvests from `data.gouv.fr`; two levels removed but same origin. |
+| Légifrance / DILA | Publishes legal outputs (laws, JO text), not session calendars. |
+| NosSénateurs / Regards Citoyens | Downstream scrapers of `senat.fr`; not independent upstream sources. |
+| Gallica (BNF) | Journal Officiel scans only (pre-2003); no structured calendar. |
+| Academic projects | All built from Sénat's own published data. |
+
+The Sénat's digital archive is a closed system — `data.senat.fr` is the sole
+authoritative structured data provider. No external entity independently tracks
+the Sénat's plenary calendar. The `debats.sql` dump used for cross-validation
+is still a `data.senat.fr` product (different format, same underlying database).
+This is an institutional reality, not a collection failure. We document it as a
+stated limitation.
 
 ---
 
