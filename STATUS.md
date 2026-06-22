@@ -237,6 +237,12 @@ stated limitation.
   (10,422 entries with year-range expansion). Integrated into
   `extract_text.py` via `load_senateurs()` and chamber-conditional
   routing in `resolve_party()`. Tested on 2 Sénat PDFs: 95–98% match rate.
+- [x] **Leg 11 (1997–2002) Wikipedia lookup BUILT AND INTEGRATED** —
+  `resolve_speakers/build_leg11_lookup.py` scrapes Wikipedia's authoritative
+  list of 577 deputies for the 11th legislature (AMO30 skips Leg 11).
+  Produces `deputes_leg11_lookup.json` (569 entries across SOC, RPR, UDF,
+  DL, COM, RCV, NI). Auto-merged into `load_deputes()` in `extract_text.py`.
+  Tested on 3 Leg 11 PDFs: 79–92% party match rate.
 - [x] **Standalone module** (`resolve_speakers/resolve_speakers.py`) is still a stub —
   the resolution logic lives inline in `extract_text.py` for now.
 
@@ -298,4 +304,4 @@ ParlaMint-FR freeze at 2019), and a flat CSV/Parquet format.
 | **Total PDFs on disk** | **10,020** (= 7,843 AN + 2,177 Sénat, matches inventory) |
 | AN 2017+ CRI coverage | **100%** (all CRI-published dates covered; 290 Réunions entries are non-CRI) |
 | Speeches extracted | 🟡 PARTIAL — ~770 rows written to test_batch.csv; extraction engine validated on 36 PDFs with 2,190+ speeches, zero crashes |
-| Speaker resolutions | ✅ DONE — AN lookup integrated (3,803 entries); Sénat lookup integrated (10,422 entries, 95–98% match rate) |
+| Speaker resolutions | ✅ DONE — AN AMO30 (3,803 entries, Legs 12–17); AN Leg 11 Wikipedia (569 entries, 79–92%); Sénat (10,422 entries, 95–98%) |

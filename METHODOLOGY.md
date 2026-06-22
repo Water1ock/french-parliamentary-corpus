@@ -298,6 +298,28 @@ as a stated limitation.
 
 ---
 
+## Leg 11 party resolution — Wikipedia lookup
+
+The AMO30 structured dataset published by `data.assemblee-nationale.fr` covers
+legislatures XII–XVII (2002–present) only. For legislature XI (1997–2002),
+party affiliations were sourced from the authoritative Wikipedia page
+[*Liste des députés de la XIe législature de la Cinquième République*](https://fr.wikipedia.org/wiki/Liste_des_d%C3%A9put%C3%A9s_de_la_XIe_l%C3%A9gislature_de_la_Cinqui%C3%A8me_R%C3%A9publique),
+which aggregates information from the Journal Officiel, electoral records, and
+parliamentary archives. The page documents the final composition of the
+legislature (June 18, 2002): 569 deputies across 6 political groups
+(SOC, RPR, UDF, DL, COM, RCV) plus 5 non-inscrits (NI).
+
+This is documented as a stated limitation: the AN's structured open-data
+programme did not yet exist during legislature XI, and no machine-readable
+official dataset covers party affiliations for this period. The Wikipedia
+source is the best available structured aggregation of this public-record
+information.
+
+Validation: a random sample of Leg 11 entries will be spot-checked against
+the AN's Sycomore biographical database to confirm accuracy.
+
+---
+
 ## Planned future additions — linguistic annotation
 
 ParisParl (1996–2019) and ParlaMint-FR include linguistic annotation layers

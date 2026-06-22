@@ -73,6 +73,7 @@ french-parliamentary-corpus/
 │                                     # Validated on 36 PDFs: 0 crashes, 0 page-header leaks.
 ├── resolve_speakers/    # Speaker→party resolution (DONE)
 │   ├── build_senat_lookup.py        # Sénat speaker→party lookup builder (DONE)
+│   ├── build_leg11_lookup.py        # Leg 11 Wikipedia deputy→party lookup (DONE)
 │   └── resolve_speakers.py          # Standalone resolver (TODO — stub)
 ├── annotate/            # Linguistic annotation (planned — deferred)
 │   └── (post-processing pass after core extraction is complete)
