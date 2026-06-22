@@ -902,10 +902,10 @@ def _find_pdf(leg: str, session_key: str, pdf_name: str) -> Optional[Path]:
         return candidate
     # Fallback: glob search
     import glob as glob_mod
-    matches = list(glob.glob(str(PDF_DIR / f"{leg}_*{pdf_name}")))
+    matches = list(glob_mod.glob(str(PDF_DIR / f"{leg}_*{pdf_name}")))
     if matches:
         return Path(matches[0])
-    matches = list(glob.glob(str(PDF_DIR / f"*{pdf_name}")))
+    matches = list(glob_mod.glob(str(PDF_DIR / f"*{pdf_name}")))
     if matches:
         return Path(matches[0])
     return None
