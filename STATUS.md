@@ -231,12 +231,13 @@ stated limitation.
   Downloads AMO30 dataset from `data.assemblee-nationale.fr`, builds
   `deputes_lookup.json` with (norm_name, legislature) → party mapping.
   Surname-only O(1) fallback for partial matches.
-- [x] **Sénat lookup BUILT** — `resolve_speakers/build_senat_lookup.py` downloads
-  ODSEN_HISTOGROUPES.csv from `data.senat.fr`, builds `senateurs_lookup.json`
-  with (norm_name, year) → group mapping.
-- [ ] **Sénat lookup NOT YET INTEGRATED** into `extract_text.py` — Sénat speeches
-  currently get `speaker_party = ""` during extraction.
-- [ ] **Standalone module** (`resolve_speakers/resolve_speakers.py`) is still a stub —
+- [x] **Sénat lookup BUILT and INTEGRATED** — `resolve_speakers/build_senat_lookup.py`
+  downloads ODSEN_HISTOGROUPES.csv from `data.senat.fr`, builds
+  `senateurs_lookup.json` with (norm_name, year) → group mapping
+  (10,422 entries with year-range expansion). Integrated into
+  `extract_text.py` via `load_senateurs()` and chamber-conditional
+  routing in `resolve_party()`. Tested on 2 Sénat PDFs: 95–98% match rate.
+- [x] **Standalone module** (`resolve_speakers/resolve_speakers.py`) is still a stub —
   the resolution logic lives inline in `extract_text.py` for now.
 
 ### AN 2017+ inventory gaps
@@ -246,13 +247,6 @@ stated limitation.
 ---
 
 ## OPEN DESIGN QUESTIONS
-
-### Sénat party resolution integration
-
-The `build_senat_lookup.py` script and `senateurs_lookup.json` cache exist.
-The resolution logic needs to be wired into `extract_text.py` so Sénat speeches
-get `speaker_party` populated. The design is resolved (same pattern as AN:
-full-name match + surname-only fallback); only the integration code is pending.
 
 ### Sénat 2003–2007 HTML-era sessions
 
@@ -294,4 +288,4 @@ ParlaMint-FR freeze at 2019), and a flat CSV/Parquet format.
 | **Total PDFs on disk** | **10,020** (= 7,843 AN + 2,177 Sénat, matches inventory) |
 | AN 2017+ CRI coverage | **100%** (all CRI-published dates covered; 290 Réunions entries are non-CRI) |
 | Speeches extracted | 🟡 PARTIAL — ~770 rows written to test_batch.csv; extraction engine validated on 36 PDFs with 2,190+ speeches, zero crashes |
-| Speaker resolutions | 🟡 PARTIAL — AN lookup integrated; Sénat lookup built, not yet integrated |
+| Speaker resolutions | ✅ DONE — AN lookup integrated (3,803 entries); Sénat lookup integrated (10,422 entries, 95–98% match rate) |
